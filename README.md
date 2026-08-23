@@ -9,12 +9,12 @@ and chicken. You hear a native voice, record yourself saying the same thing,
 and the app shows you how close you got: side-by-side waveforms, an intonation
 comparison, and a word-by-word pronunciation score.
 
-Five units, fifteen lessons, seventy-five phrases:
+Five units, fifteen lessons, seventy-six phrases:
 
 | Unit | What it's for |
 |---|---|
 | **Saludos** | Good morning, meeting people, and being politely stuck |
-| **El cava** | A glass, a toast, water for the table, and settling up |
+| **El cava** | A glass, a toast, red wine for John, water, and settling up |
 | **El restaurante** | Getting a table, ordering fish, and saying it was lovely |
 | **El mercado** | The fish counter, cheese and ham, chicken, and paying |
 | **La Navidad** | Just landed, Christmas greetings, and the Christmas table |

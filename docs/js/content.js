@@ -77,17 +77,17 @@ export const COURSE = [
           },
           {
             id: "saludos-2-2",
-            text: "Me llamo Sue.",
-            translation: "My name's Sue.",
+            text: "Me llamo Katrina.",
+            translation: "My name's Katrina.",
             focusNote:
-              "'ll' in Spain is a 'y' sound: me YA-mo. Literally 'I call myself' — swap in your own name and the rest of the sentence never changes.",
+              "'ll' in Spain is a 'y' sound: me YA-mo. Your name survives intact in Spanish — ka-TREE-na, stress in the middle, and that r is a single quick tap rather than an English one.",
           },
           {
             id: "saludos-2-3",
-            text: "Este es mi marido.",
-            translation: "This is my husband.",
+            text: "Este es mi marido, John.",
+            translation: "This is my husband, John.",
             focusNote:
-              "Both 'd's are soft, and the r in 'marido' is a single quick tap — tongue flicks the ridge behind your teeth once, like the middle of 'butter' said quickly.",
+              "The r in 'marido' is a single quick tap — like the middle of 'butter' said fast — and both d's are soft. Don't be startled when it comes back at you as 'Yon': a Spanish j is made in the throat, so his name is one they'll reach for carefully.",
           },
           {
             id: "saludos-2-4",
@@ -239,7 +239,7 @@ export const COURSE = [
       },
       {
         id: "cava-3",
-        title: "Water, and the bill",
+        title: "Wine, water and the bill",
         phrases: [
           {
             id: "cava-3-1",
@@ -247,6 +247,13 @@ export const COURSE = [
             translation: "A bottle of still water.",
             focusNote:
               "'agua' is A-gwa. 'Sin gas' is how you ask for still — say nothing and you may well get sparkling.",
+          },
+          {
+            id: "cava-3-6",
+            text: "Para John, una copa de vino tinto.",
+            translation: "A glass of red wine for John.",
+            focusNote:
+              "BEE-no TEEN-to — v as b again, and 'tinto' is the word for red wine; ask for 'vino rojo' and you'll get a puzzled look. House red by the glass is 'un tinto de la casa'.",
           },
           {
             id: "cava-3-2",

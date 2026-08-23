@@ -99,13 +99,20 @@ The course is built around one fortnight rather than a general syllabus: Mum
 and Dad flying out for Christmas, a fish restaurant, a market run for fish,
 cheese, ham and chicken, and cava — the only thing Mum drinks, which is why
 the drinks unit is a cava unit and not a coffee one. Five units of three
-lessons of five phrases: **Saludos**, **El cava**, **El restaurante**,
-**El mercado**, **La Navidad**. When the trip is over, that fifth unit is the
-one to replace.
+lessons, five phrases each bar one: **Saludos**, **El cava**,
+**El restaurante**, **El mercado**, **La Navidad**. When the trip is over,
+that fifth unit is the one to replace.
+
+The cards name real people — Katrina, and John, who drinks red wine and beer.
+That is why `cava-3` carries six phrases rather than five: neither of his
+drinks was worth dropping to hold the count. Its extra card is **`cava-3-6`,
+sitting second in reading order** — array position is what displays, ids are
+append-only, so a card added later does not have to sit last on screen. If the
+names ever change, they are in `saludos-2-2`, `saludos-2-3` and `cava-3-6`.
 
 - **Phrase ids are stable and referenced by saved attempts.** Never renumber;
   append.
-- A lesson is ~5 phrases — one 6:30am coffee. Keep them that size.
+- A lesson is ~5 phrases — one cup of tea. Keep them that size.
 - Every phrase has a `focusNote` written for a **British** English speaker
   learning **Castilian** Spanish — soft d's, silent h, b=v, the 'th' in
   ce/ci/z, tapped r. The notes are the pedagogy, not decoration.
