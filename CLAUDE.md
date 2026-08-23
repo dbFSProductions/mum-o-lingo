@@ -241,6 +241,20 @@ of it; the half that strands you is the answer.
   key, browser voice if there isn't, busy flag on the button itself so several
   can sit on one screen.
 
+### Situation is the first box in the composer
+
+The Add tab asks for the situation *above* the Spanish and English boxes, and
+that ordering is the point rather than a layout preference. It is the field the
+completion is built from — where you are and who you are talking to is what
+decides what a person would actually say — and it is the thing the other apps
+skip. Underneath the two language boxes it read as a footnote to them and got
+left blank; above them it is the question being asked. The "or" divider still
+belongs to the pair below it, and *Generate again*'s hint still puts the cursor
+here, which now means the top of the card rather than the bottom.
+
+It stays labelled **(optional)**, honestly: `completeCard` needs Spanish or
+English, so a situation on its own can't build a card.
+
 ### The Add review says the card out loud, and can be sent back
 
 A generated card used to be checkable only by reading it. The review opens with

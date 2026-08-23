@@ -824,6 +824,9 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .add-setup { margin-bottom: 12px; }
 .add-setup .link { padding-right: 0; }
 .add-card { padding: 16px; }
+/* div.field carries no bottom margin — the composer's spacing comes from the
+   "or" divider. Situation sits above that pair and needs its own gap. */
+.add-card .situation-field { margin-bottom: 14px; }
 .add-card textarea { min-height: 82px; }
 .add-card .add-complete { margin-top: 4px; }
 .add-card .notice { margin-bottom: 12px; }

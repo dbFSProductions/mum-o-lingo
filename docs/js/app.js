@@ -2276,10 +2276,17 @@ function renderAdd() {
   let replies = [];
   let repliesToken = 0;
 
+  /* Situation is the first box in the composer, not the last. It is what the
+     rest of the card is built from — the assistant reads it to decide what a
+     person would actually say — and under the two language boxes it read as an
+     afterthought and got skipped. It stays labelled optional because it is:
+     completeCard still needs Spanish or English, so this box on its own can't
+     build a card. */
   view.innerHTML = `
     <h1>Add a card</h1>
-    <p class="muted add-intro">Write whatever you remember, in Spanish or English. Perico's clever cousin
-      will fix it up and build the rest of the card.</p>
+    <p class="muted add-intro">Start with the situation — it's what the rest of the card is built from.
+      Then write whatever you remember, in Spanish or English, and Perico's clever cousin
+      will fix it up.</p>
 
     ${
       settings.hasAssistant
@@ -2289,17 +2296,17 @@ function renderAdd() {
     }
 
     <div class="card add-card">
-      ${composerField("add-target", "Spanish", COURSE_LANGUAGE, true)}
-      <div class="language-divider"><span>or</span></div>
-      ${composerField("add-english", "English", "en-US", true)}
-
-      <div class="field">
+      <div class="field situation-field">
         <div class="field-head">
           <label for="add-situation">Situation <span class="muted">(optional)</span></label>
           <button class="dictate" type="button" data-dictate="add-situation" data-locale="en-US" aria-label="Dictate the situation">${micIcon()}</button>
         </div>
         <textarea id="add-situation" rows="2"></textarea>
       </div>
+
+      ${composerField("add-target", "Spanish", COURSE_LANGUAGE, true)}
+      <div class="language-divider"><span>or</span></div>
+      ${composerField("add-english", "English", "en-US", true)}
 
       <button class="btn btn-primary btn-big add-complete" id="complete-card">Build the card</button>
       <div id="add-error" class="notice bad" hidden></div>
@@ -2324,7 +2331,7 @@ function renderAdd() {
           <textarea id="result-focus" rows="3"></textarea></label>
         <section id="result-replies"></section>
         <p class="tiny muted regen-hint">Not what you meant?
-          <button class="link" id="edit-inputs">Change the Spanish, English or situation</button>
+          <button class="link" id="edit-inputs">Change the situation, Spanish or English</button>
           above, then generate again.</p>
         <div class="btn-row">
           <button class="btn" id="try-again">Generate again</button>
