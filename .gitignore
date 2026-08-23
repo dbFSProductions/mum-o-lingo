@@ -1,0 +1,4 @@
+.DS_Store
+*.env
+Secrets.plist
+node_modules/

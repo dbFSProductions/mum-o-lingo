@@ -1,0 +1,1033 @@
+/* Mum-o-lingo — mobile-first, unapologetically Duolingo-flavoured.
+   Chunky 3D buttons, a winding lesson path, one green bird's worth of cheer. */
+
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("vendor/fonts/nunito-latin.woff2") format("woff2");
+}
+
+:root {
+  --green: #58cc02;
+  --green-dark: #46a302;
+  --blue: #1cb0f6;
+  --blue-dark: #1899d6;
+  --gold: #ffc800;
+  --gold-dark: #e5b400;
+  --red: #ff4b4b;
+  --red-dark: #d33131;
+  --orange: #ff9600;
+  --orange-dark: #e08600;
+  --purple: #ce82ff;
+  --purple-dark: #a568cc;
+  --amber: #cd9d00;
+
+  --accent: var(--green);
+  --you: var(--blue);
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f0f2f4;
+  --text: #4b4b4b;
+  --text-2: #777777;
+  --text-3: #afafaf;
+  --line: #e5e5e5;
+
+  --radius: 16px;
+  --tabbar-h: 74px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131f24;
+    --surface: #202f36;
+    --surface-2: #2b3d47;
+    --text: #f1f7fb;
+    --text-2: #9fb1bb;
+    --text-3: #6d8391;
+    --line: #37464f;
+    --amber: #e9b83f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 "Nunito", ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+
+body {
+  min-height: 100dvh;
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+
+/* During a lesson the tabbar hides; the result banner sits in flow now, so
+   only a little breathing room is needed at the bottom. */
+body.in-lesson { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+body.in-lesson .tabbar { display: none; }
+
+.view {
+  padding: max(env(safe-area-inset-top), 12px) 16px 24px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 1.55rem; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.01em; }
+h2 { font-size: 1.05rem; font-weight: 800; margin: 0; }
+p { margin: 0 0 10px; }
+
+.muted { color: var(--text-2); }
+.tiny { font-size: 0.78rem; }
+.small { font-size: 0.87rem; }
+.center { text-align: center; }
+
+/* ------------------------------------------------------------------- home */
+
+.home-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.wordmark {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--green);
+  letter-spacing: -0.02em;
+}
+
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.streak .flame { width: 22px; height: 22px; fill: var(--text-3); }
+.streak.lit { color: var(--orange); }
+.streak.lit .flame { fill: var(--orange); }
+
+.mascot-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bubble {
+  position: relative;
+  flex: 1;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.bubble::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--surface);
+  border-left: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* -------------------------------------------------------------------- path */
+
+.unit { margin-bottom: 6px; }
+
+.unit-banner {
+  background: var(--unit);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  color: #fff;
+  box-shadow: 0 4px 0 var(--unit-dark);
+  margin-bottom: 22px;
+}
+.unit-name { font-weight: 900; font-size: 1.1rem; letter-spacing: 0.01em; }
+.unit-sub { font-size: 0.84rem; opacity: 0.9; font-weight: 700; }
+
+.path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 22px;
+}
+
+.node-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(calc(var(--offset) * 52px));
+  position: relative;
+}
+
+.node {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--node);
+  box-shadow: 0 7px 0 var(--node-dark);
+}
+.node:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--node-dark); }
+.node svg { width: 30px; height: 30px; fill: currentColor; }
+.node.current { animation: node-pulse 1.8s ease-in-out infinite; }
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 7px 0 var(--node-dark), 0 0 0 0 color-mix(in srgb, var(--node) 45%, transparent); }
+  50% { box-shadow: 0 7px 0 var(--node-dark), 0 0 0 12px transparent; }
+}
+
+.node-callout {
+  position: absolute;
+  top: -34px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  animation: bob 1.2s ease-in-out infinite;
+  z-index: 2;
+  white-space: nowrap;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.node-title {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-2);
+  text-align: center;
+  max-width: 130px;
+}
+
+/* ------------------------------------------------------------------ lesson */
+
+.lesson-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 18px;
+}
+/* Edit sits at the far end of the lesson bar, quiet enough not to compete
+   with the progress it is standing next to. */
+.lesson-top .muted-link { flex: none; padding: 4px 0 4px 4px; }
+
+.quit {
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.bar {
+  flex: 1;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+  position: relative;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 14px;
+}
+.bar-fill::after {
+  content: "";
+  position: absolute;
+  left: 8px; right: 8px; top: 3px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.instruction {
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 2px solid var(--line);
+}
+
+.rows { background: var(--surface); border-radius: var(--radius); border: 2px solid var(--line); overflow: hidden; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.row:last-child { border-bottom: 0; }
+.row:active { background: var(--surface-2); }
+
+/* A starred row splits in two: the star toggles in place, the rest opens the
+   phrase. Both have to look like one tappable row. */
+.row-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.star {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: -5px 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.star svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.star[aria-pressed="true"] { color: var(--gold-dark); }
+.star[aria-pressed="true"] svg { fill: var(--gold); stroke: var(--gold-dark); }
+.star:active { background: var(--surface-2); }
+
+.row-main { flex: 1; min-width: 0; }
+.row-title { font-weight: 700; }
+.row-sub { font-size: 0.8rem; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chev { color: var(--text-3); flex: none; }
+
+.section-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  margin: 22px 4px 8px;
+  font-weight: 800;
+}
+/* ---------------------------------------------------------------- buttons */
+
+button { font: inherit; }
+
+.btn {
+  appearance: none;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 4px 0 var(--line);
+}
+.btn:active { transform: translateY(4px); box-shadow: none; }
+.btn[disabled] { opacity: 0.4; cursor: default; }
+
+.btn-primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--green-dark);
+}
+.btn-primary:active { box-shadow: none; }
+
+/* The "You" playback button matches the blue of the "You" waveform, the way
+   the green primary matches the native-speaker one. */
+.btn-you {
+  background: var(--you);
+  border-color: var(--you);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--blue-dark);
+}
+.btn-you:active { box-shadow: none; }
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+.btn-ghost:active { transform: scale(0.97); }
+
+.btn-big { width: 100%; padding: 15px; font-size: 1rem; margin-top: 18px; }
+
+.btn-row { display: flex; gap: 9px; }
+.btn-row .btn { flex: 1; }
+.btn-danger { color: var(--red); }
+
+.link { background: none; border: 0; color: var(--blue); font-weight: 800; cursor: pointer; padding: 6px; }
+.muted-link { color: var(--text-3); letter-spacing: 0.1em; font-size: 0.8rem; }
+/* .btn-danger is defined above .link and loses to it on a plain link, so every
+   "Delete" and "Forget this" was quietly painted the same blue as everything
+   else. Needs to sit after .link, not before it. */
+.link.btn-danger { color: var(--red); }
+
+/* ----------------------------------------------------------------- tabbar */
+
+/* Four chunky coloured pills rather than grey glyphs — each tab owns a
+   colour, and the current one is the fully lit, raised one. */
+
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding: 8px 10px calc(env(safe-area-inset-bottom) + 10px);
+  display: flex;
+  gap: 8px;
+  background: var(--surface);
+  border-top: 2px solid var(--line);
+  z-index: 40;
+}
+.tab {
+  flex: 1;
+  background: var(--tab);
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--tab-dark);
+  opacity: 0.8;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.tab[data-tab="learn"] { --tab: var(--green); --tab-dark: var(--green-dark); }
+.tab[data-tab="phrases"] { --tab: var(--blue); --tab-dark: var(--blue-dark); }
+.tab[data-tab="add"] { --tab: var(--orange); --tab-dark: var(--orange-dark); }
+.tab[data-tab="settings"] { --tab: #b56bf2; --tab-dark: #9147cc; }
+.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.tab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--tab-dark); }
+.tab[aria-current="true"] {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--tab-dark), inset 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+.tab[aria-current="true"]:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--tab-dark), inset 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
+}
+
+/* ------------------------------------------------------------------ drill */
+
+.drill-card { border-width: 2px; }
+
+.drill-text {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+}
+.drill-translation { color: var(--text-2); font-weight: 600; margin-bottom: 12px; }
+
+.focus-note {
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px 11px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.focus-note strong {
+  display: block;
+  color: var(--blue);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+
+
+/* ------------------------------------------------------- level two (recall) */
+
+/* A card that has been said well twice stops showing its Spanish: the drill
+   asks in English and Mum has to produce it. The badge is there so the empty
+   space reads as a question, not as a card that failed to load. */
+
+.level-badge {
+  display: inline-block;
+  background: var(--purple);
+  color: #fff;
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+/* The English prompt sits where the Spanish normally does, so the eye lands in
+   the same place — but lighter and in the body colour, because it is the
+   question rather than the thing being learned. */
+.recall-prompt { font-weight: 700; color: var(--text-2); }
+
+.level-line { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+.level-line .level-badge { margin-bottom: 0; }
+.level-line .tiny { flex: 1 1 180px; }
+
+/* record button */
+.record-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 22px 0 6px; }
+.record {
+  position: relative;
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--green);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--green-dark);
+}
+.record:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--green-dark); }
+.record.recording { background: var(--red); box-shadow: 0 6px 0 var(--red-dark); }
+.record svg { width: 32px; height: 32px; fill: currentColor; }
+.record-ring {
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--red) 45%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.06s linear;
+}
+.record.recording .record-ring { opacity: 1; }
+
+canvas { width: 100%; display: block; }
+.wave-label { font-size: 0.72rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+
+/* ----------------------------------------------------------------- banner */
+
+/* In normal flow at the end of the drill content, below the waveform
+   comparison — NOT fixed over it. Reaching Continue means scrolling past the
+   compare-and-listen-back section, which is how Mum discovers it; a fixed
+   overlay hid that whole feature (and fought iOS Safari's scroll on
+   re-render). */
+.banner {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  animation: banner-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes banner-in {
+  from { transform: translateY(30%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.banner-text { flex: 1 1 220px; }
+.banner-head { font-weight: 900; font-size: 1.15rem; }
+.banner-sub { font-size: 0.85rem; font-weight: 600; opacity: 0.85; }
+.banner-buttons { display: flex; gap: 9px; margin-left: auto; }
+
+.banner.great { background: #d7ffb8; color: #58a700; }
+.banner.ok { background: #fff5d1; color: #a67c00; }
+.banner.retry { background: #ffdfe0; color: #ea2b2b; }
+.banner.neutral { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+
+@media (prefers-color-scheme: dark) {
+  .banner.great { background: #1a3a10; color: #8ee000; }
+  .banner.ok { background: #3c3208; color: #ffd23f; }
+  .banner.retry { background: #431418; color: #ff7a7a; }
+}
+
+.banner .btn-ghost { color: inherit; }
+.banner .btn-primary { min-width: 130px; }
+.banner.retry .btn-primary { background: var(--red); border-color: var(--red); box-shadow: 0 4px 0 var(--red-dark); }
+
+/* ------------------------------------------------------------- completion */
+
+.complete {
+  text-align: center;
+  padding-top: 8vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.complete .parrot { animation: parrot-hop 0.9s ease-in-out infinite; }
+@keyframes parrot-hop {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+.complete-title {
+  color: var(--gold-dark);
+  font-size: 1.7rem;
+  font-weight: 900;
+  margin: 14px 0 20px;
+}
+
+.stat-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.stat {
+  border: 2px solid var(--stat);
+  border-radius: 14px;
+  overflow: hidden;
+  min-width: 92px;
+}
+.stat-label {
+  background: var(--stat);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+}
+.stat-value {
+  padding: 8px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.stat-value .flame { width: 20px; height: 20px; fill: var(--orange); }
+.stat.grew { animation: stat-pop 0.5s cubic-bezier(0.22, 1.6, 0.36, 1) 0.3s backwards; }
+@keyframes stat-pop {
+  from { transform: scale(0.6); }
+  to { transform: scale(1); }
+}
+
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.confetto {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0.7; }
+}
+
+/* score */
+.score-head { display: flex; align-items: center; gap: 16px; }
+.dial { position: relative; width: 68px; height: 68px; flex: none; }
+.dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.dial-value {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 1.25rem; font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+/* Four aggregates now sit beside the dial, under the verdict line, so they
+   have to wrap rather than squeeze at phone width. */
+.subscores { display: flex; flex-wrap: wrap; gap: 6px 13px; margin-top: 5px; }
+.subscore-label { font-size: 0.7rem; color: var(--text-3); font-weight: 700; }
+.subscore-value { font-size: 0.95rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.chip.good { background: color-mix(in srgb, var(--green) 22%, transparent); }
+.chip.ok { background: color-mix(in srgb, var(--gold) 30%, transparent); }
+.chip.bad { background: color-mix(in srgb, var(--red) 24%, transparent); }
+.phoneme-box { background: var(--surface-2); border-radius: 10px; padding: 10px; margin-top: 9px; }
+.phoneme { display: inline-flex; flex-direction: column; align-items: center; padding: 4px 7px; }
+.phoneme code { font-size: 0.8rem; }
+.phoneme span { font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ forms */
+
+label.field { display: block; margin-bottom: 12px; }
+label.field > span { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-2); margin-bottom: 5px; }
+input[type="text"], input[type="password"], input[type="search"], textarea, select {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+textarea { min-height: 74px; resize: vertical; }
+input[type="range"] { width: 100%; accent-color: var(--green); }
+
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.switch-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--green); }
+
+/* ------------------------------------------------------------------ sheet */
+
+.sheet { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; }
+/* `display: flex` beats the `hidden` attribute's default `display: none`, which
+   would leave an invisible full-screen backdrop swallowing every tap.
+   (Learned the hard way in Xerra — keep this rule.) */
+.sheet[hidden], .toast[hidden] { display: none; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 20px 20px 0 0;
+  padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+/* ------------------------------------------------------------------ toast */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px);
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  z-index: 80;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.empty { text-align: center; color: var(--text-2); padding: 48px 20px; }
+
+.notice { border-left: 4px solid var(--gold); padding: 9px 12px; background: var(--surface); border: 2px solid var(--line); border-left: 4px solid var(--gold); border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: var(--text-2); }
+.notice.bad { border-left-color: var(--red); }
+.notice.good { border-left-color: var(--green); }
+
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid var(--text-3);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+
+/* ------------------------------------------------------- phrases, add, chat */
+
+.list-intro { margin: -8px 0 14px; font-weight: 700; }
+
+.sheet-lede { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.sheet-lede p { flex: 1; margin: 0; font-weight: 700; }
+
+/* Situation and usage sit above the pronunciation tip: what the phrase is for,
+   then how it's used, then how to say it. */
+.phrase-context {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 9px;
+  margin: 10px 0;
+  padding-top: 10px;
+  border-top: 2px solid var(--line);
+  color: var(--text-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.phrase-context strong {
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.add-intro { margin: -8px 0 16px; font-weight: 700; }
+.add-setup { margin-bottom: 12px; }
+.add-setup .link { padding-right: 0; }
+.add-card { padding: 16px; }
+.add-card textarea { min-height: 82px; }
+.add-card .add-complete { margin-top: 4px; }
+.add-card .notice { margin-bottom: 12px; }
+#card-preview { scroll-margin-top: 12px; }
+
+.field-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+.field-head label { color: var(--text-2); font-size: 0.78rem; font-weight: 700; }
+
+.dictate {
+  width: 38px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  color: var(--green-dark);
+  cursor: pointer;
+}
+.dictate svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.dictate.listening { background: var(--red); color: #fff; animation: dictation-pulse 1.1s ease-in-out infinite; }
+@keyframes dictation-pulse { 50% { opacity: 0.6; } }
+
+.language-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -2px 0 12px;
+  color: var(--text-3);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.language-divider::before, .language-divider::after { content: ""; height: 2px; background: var(--line); flex: 1; }
+
+.chat-card { padding: 12px; }
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.chat-msg {
+  max-width: 88%;
+  padding: 9px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.chat-msg.user { align-self: flex-end; background: var(--blue); color: #fff; border-bottom-right-radius: 5px; }
+.chat-msg.assistant { align-self: flex-start; background: var(--surface-2); color: var(--text); border-bottom-left-radius: 5px; }
+.chat-thinking { display: flex; align-items: center; }
+.chat-form { display: flex; align-items: flex-end; gap: 8px; }
+/* The ask box and the card's detail boxes grow with what's typed in them —
+   autosize() drives the height, so no inner scrolling and no resize handle. */
+.chat-form textarea { min-height: 46px; }
+.chat-form textarea, .add-card textarea, .sheet-panel textarea { resize: none; }
+.chat-form .btn { flex: none; }
+
+/* ---------------------------------------------------------------- replies */
+
+/* What you might hear back. The play button leads, because the point of these
+   is to have heard them before someone says one to you at speed.
+   Ported from Xerra — same markup, same shape; keep the two in step. */
+.replies { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.reply {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--blue) 9%, transparent);
+}
+.reply-play {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-top: -1px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--blue-dark);
+  cursor: pointer;
+}
+.reply-play svg { width: 15px; height: 15px; fill: currentColor; margin-left: 2px; }
+.reply-play:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--blue-dark); }
+.reply-play.busy { opacity: 0.55; }
+.reply-main { flex: 1; min-width: 0; }
+.reply-text { display: block; font-weight: 800; overflow-wrap: anywhere; }
+.reply-translation { display: block; margin-top: 2px; font-size: 0.82rem; color: var(--text-2); overflow-wrap: anywhere; }
+
+/* The card she's about to save, said out loud. Same shape as a reply — play
+   button, the line, its English — because it does the same job one step up, so
+   it wears the Add tab's orange and slightly bigger text. */
+.preview-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--orange) 13%, transparent);
+}
+.preview-line .reply-play {
+  width: 38px;
+  height: 38px;
+  background: var(--orange);
+  box-shadow: 0 3px 0 var(--orange-dark);
+}
+.preview-line .reply-play:active { box-shadow: 0 1px 0 var(--orange-dark); }
+.preview-line .reply-play svg { width: 17px; height: 17px; }
+.preview-line .reply-text { font-size: 1.08rem; }
+
+/* The fields "Generate again" re-reads are at the top of the page, so the way
+   back to them is spelled out next to the button rather than assumed. */
+.regen-hint { margin: 14px 4px 0; }
+.regen-hint .link { padding: 0; }
+/* Even at 390px "Generate again" and "Save it" can't share a row without both
+   wrapping onto a second line, which makes both buttons 70px tall. The review
+   stacks them instead — same order as the row they replace, secondary above
+   primary, Save nearest the thumb. */
+#card-preview .btn-row { flex-direction: column; }
+
+/* Under the drill it is reference material, so it wears a margin rather than
+   sitting tight against the comparison it follows. */
+.drill-replies, .drill-notes { margin-top: 18px; }
+.drill-replies .section-label, .drill-notes .section-label { margin: 0 4px 8px; }
+
+/* -------------------------------------------------------------- kept notes */
+
+/* Keeping an answer. The button sits inside the bubble it belongs to, on its
+   own line, so several answers can each offer it without a row of controls
+   competing with the text. */
+.chat-keep, .chat-kept {
+  display: block;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chat-kept { color: var(--text-3); }
+
+/* A kept answer, printed back under the card. Green rather than the chat's
+   blue: on the phrase sheet it sits a few pixels from the replies, and the two
+   are different things — what you'd hear back, and what you asked. */
+.kept-notes { display: grid; gap: 8px; }
+.kept-note {
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px 11px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+/* The question, in the case it was typed in. The uppercase treatment the other
+   labels wear is for two-word headings — a whole question in caps shouts. */
+.kept-note strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--green-dark);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+/* Only the answer keeps its line breaks: pre-wrap on the box itself would
+   print the template's own indentation. */
+.kept-note span { display: block; white-space: pre-wrap; }
+.kept-note .link { display: block; margin-top: 6px; padding: 0; font-size: 0.75rem; }
+
+/* ---------------------------------------------------------------- sobre mí */
+
+/* The way out of an interview that went somewhere you didn't mean. Under the
+   ask box and quiet, because clearing the conversation is the rare thing to
+   want on a page whose whole job is adding to it. */
+.chat-foot { margin-top: 10px; text-align: center; }
+.chat-foot .link { font-size: 0.78rem; }
+
+.about-head { margin: 0 0 6px; }
+.about-lede { margin: 0 0 16px; }
+#about-practise { margin-bottom: 4px; }
+#about-make { width: 100%; margin-top: 12px; }
+#about-make + .tiny { margin-top: 8px; text-align: center; }
+
+/* --------------------------------------------------------------- versions */
+
+/* The two version numbers in Settings, side by side so a mismatch is obvious. */
+.version-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  color: var(--text-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.version-row strong { color: var(--text); font-variant-numeric: tabular-nums; }
