@@ -2275,6 +2275,13 @@ function renderAdd() {
      a different card has been asked for. */
   let replies = [];
   let repliesToken = 0;
+  /* What she typed, kept raw, so the review's Undo can put her own words back.
+     The completion overwrites all three inputs with its corrected versions,
+     and "be clearer about the situation" is much easier to do from what she
+     wrote than from the assistant's rewrite of it. Held out here rather than
+     inside completeCard because Undo is now part of the review's own hint line
+     and is wired once, not rebuilt per completion. */
+  let before = null;
 
   /* Situation is the first box in the composer, not the last. It is what the
      rest of the card is built from — the assistant reads it to decide what a
@@ -2315,7 +2322,6 @@ function renderAdd() {
     <section id="card-preview" hidden>
       <div class="section-label">Check it over</div>
       <div class="card add-card">
-        <div id="review-note" class="notice" hidden></div>
         <div class="preview-line">
           <button class="reply-play" id="preview-say" aria-label="Listen to this card">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>
@@ -2325,17 +2331,19 @@ function renderAdd() {
             <span class="reply-translation" id="preview-translation"></span>
           </span>
         </div>
+        <div id="review-note" class="notice"></div>
+        <p class="tiny muted regen-hint">Not what you meant?
+          <button class="link" id="edit-inputs">Change the situation, Spanish or English</button>
+          above, then <button class="link" id="try-again">generate again</button>.
+          Or <button class="link" id="undo-complete">undo</button> to get your own words back.</p>
         <label class="field"><span>How it's used</span>
           <textarea id="result-usage" rows="3"></textarea></label>
         <label class="field"><span>Pronunciation tip</span>
           <textarea id="result-focus" rows="3"></textarea></label>
         <section id="result-replies"></section>
-        <p class="tiny muted regen-hint">Not what you meant?
-          <button class="link" id="edit-inputs">Change the situation, Spanish or English</button>
-          above, then generate again.</p>
         <div class="btn-row">
-          <button class="btn" id="try-again">Generate again</button>
-          <button class="btn btn-primary" id="save-card">Save it</button>
+          <button class="btn" id="save-another">Save and add another</button>
+          <button class="btn btn-primary" id="save-practise">Save and practise now</button>
         </div>
       </div>
     </section>
@@ -2365,7 +2373,9 @@ function renderAdd() {
   const tryAgain = document.getElementById("try-again");
   completeButton.addEventListener("click", completeCard);
   tryAgain.addEventListener("click", completeCard);
-  document.getElementById("save-card").addEventListener("click", saveCard);
+  document.getElementById("undo-complete").addEventListener("click", undoCompletion);
+  document.getElementById("save-another").addEventListener("click", () => saveCard({ practise: false }));
+  document.getElementById("save-practise").addEventListener("click", () => saveCard({ practise: true }));
 
   /* Hear the card before committing to it. Same button and same voice as a
      reply, one size up, and it reads the *field* rather than a snapshot of the
@@ -2381,10 +2391,10 @@ function renderAdd() {
   for (const id of ["add-target", "add-english"])
     document.getElementById(id).addEventListener("input", paintPreview);
 
-  /* "Generate again" is at the bottom of the review, the fields it re-reads are
-     at the top of the page, and on a phone they are never on screen together —
-     so it read as "roll the dice again" rather than "I'll use what you change".
-     This scrolls the composer back into view and puts the cursor in Situation,
+  /* The fields "generate again" re-reads are at the top of the page and it is
+     down here, and on a phone they are never on screen together — so it read
+     as "roll the dice again" rather than "I'll use what you change". This
+     scrolls the composer back into view and puts the cursor in Situation,
      which is usually the field that needed to be clearer. */
   document.getElementById("edit-inputs").addEventListener("click", () => {
     document.querySelector(".add-card").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2410,11 +2420,7 @@ function renderAdd() {
       return;
     }
 
-    /* What she typed, kept raw, so the review's Undo can put her own words
-       back. The completion overwrites all three inputs with its corrected
-       versions, and "be clearer about the situation" is much easier to do from
-       what she wrote than from the assistant's rewrite of it. */
-    const before = {
+    before = {
       target: document.getElementById("add-target").value,
       english: document.getElementById("add-english").value,
       situation: document.getElementById("add-situation").value,
@@ -2445,13 +2451,13 @@ function renderAdd() {
       document.getElementById("result-focus").value = result.focusNote;
       paintPreview();
 
-      /* Always shown now, with a fallback line: a completion that came back
-         with no reviewNote would otherwise have nowhere to hang the Undo. */
-      const review = document.getElementById("review-note");
-      review.innerHTML = `${esc(result.reviewNote || "Built from what you typed. Check it over, then Save.")}
-        <button class="link" id="undo-complete" style="padding:0 0 0 4px">Undo</button>`;
-      review.hidden = false;
-      document.getElementById("undo-complete").addEventListener("click", undoCompletion);
+      /* What the assistant did and why, directly under the card it did it to —
+         it is what she reads to decide whether this card is right, so it sits
+         with the card rather than at the top of the panel. Always shown, with
+         a fallback line: a completion that came back with no reviewNote would
+         otherwise leave the hint below it hanging on nothing. */
+      document.getElementById("review-note").textContent =
+        result.reviewNote || "Built from what you typed. Check it over, then save it.";
       document.getElementById("card-preview").hidden = false;
       // Sized after unhiding — a display:none box has no height to measure.
       autosizeAll(view);
@@ -2480,25 +2486,32 @@ function renderAdd() {
       setAddBusy(false);
     }
 
-    /* Undo withdraws the whole completion, not just the wording: the usage
-       note, the tip and the replies all answered the card being taken back.
-       She is left with what she typed, in the boxes she typed it in. */
-    function undoCompletion() {
-      document.getElementById("add-target").value = before.target;
-      document.getElementById("add-english").value = before.english;
-      document.getElementById("add-situation").value = before.situation;
-      // A reply still in flight now answers a card that no longer exists.
-      repliesToken++;
-      replies = [];
-      document.getElementById("card-preview").hidden = true;
-      document.getElementById("add-chat").hidden = true;
-      paintPreview();
-      autosizeAll(view);
-      document.querySelector(".add-card").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   }
 
-  function saveCard() {
+  /* Undo withdraws the whole completion, not just the wording: the usage note,
+     the tip and the replies all answered the card being taken back. She is
+     left with what she typed, in the boxes she typed it in. */
+  function undoCompletion() {
+    if (!before) return;
+    document.getElementById("add-target").value = before.target;
+    document.getElementById("add-english").value = before.english;
+    document.getElementById("add-situation").value = before.situation;
+    // A reply still in flight now answers a card that no longer exists.
+    repliesToken++;
+    replies = [];
+    document.getElementById("card-preview").hidden = true;
+    document.getElementById("add-chat").hidden = true;
+    paintPreview();
+    autosizeAll(view);
+    document.querySelector(".add-card").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* Two ways out of a finished card, because there are two things she might be
+     doing. Writing down a run of phrases in one sitting wants the form back,
+     empty; jotting the one she has just been stuck on wants to go and say it.
+     Practise is the primary — the point of the card is saying it, and a card
+     saved and never drilled is where this app leaks. */
+  function saveCard({ practise }) {
     const text = document.getElementById("add-target").value.trim();
     const translation = document.getElementById("add-english").value.trim();
     if (!text || !translation) {
@@ -2523,8 +2536,17 @@ function renderAdd() {
     // Replies are stored beside the card by id, like her stars and her edits,
     // because a course card is code and can't carry them either.
     library.setReplies(saved.id, replies);
+
+    if (practise) {
+      // The card she just wrote, straight away — the same one-card queue the
+      // phrase sheet's "Practise now" starts.
+      state.tab = "learn";
+      toast("Saved to Lo tuyo. ¡Olé!");
+      startPractice([library.phraseById(saved.id) ?? saved]);
+      return;
+    }
     renderAdd();
-    toast("Saved to Lo tuyo. ¡Olé!");
+    toast("Saved to Lo tuyo. ¿Otra?");
   }
 
   /* Fired after the card is on screen and never awaited. Card generation used
@@ -2574,7 +2596,9 @@ function renderAdd() {
     completeButton.disabled = busy;
     tryAgain.disabled = busy;
     completeButton.innerHTML = busy ? `<span class="spinner"></span> Building…` : "Build the card";
-    tryAgain.innerHTML = busy ? `<span class="spinner"></span> Generating…` : "Generate again";
+    // A link inside a sentence now, so it says its piece in lower case and
+    // keeps the sentence readable while it spins.
+    tryAgain.innerHTML = busy ? `<span class="spinner"></span> generating…` : "generate again";
   }
 }
 
