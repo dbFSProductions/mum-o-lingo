@@ -255,6 +255,36 @@ here, which now means the top of the card rather than the bottom.
 It stays labelled **(optional)**, honestly: `completeCard` needs Spanish or
 English, so a situation on its own can't build a card.
 
+### The Add review reads in one direction
+
+Preview line, then what the assistant did and why, then the way back if that
+isn't what she meant, then the fields, the replies, and the two ways out. The
+order is the argument: everything above the fields is *about the card she is
+looking at*, and everything she might do about it is a link inside one sentence
+rather than a button competing with Save.
+
+- **The review note was above the preview and the Undo was inside it.** So the
+  explanation sat above the thing it explained, and the one control that
+  withdraws the whole completion was a bare word in a yellow box at the top of
+  the panel — nowhere near "Generate again", which is the other half of the
+  same thought. Both are now directly under the card: the note, then *Not what
+  you meant? **Change the situation, Spanish or English** above, then
+  **generate again**. Or **undo** to get your own words back.*
+- **`before` and `undoCompletion` moved up to `renderAdd`'s scope.** Undo is
+  wired once now, with the rest of the page, instead of being injected into the
+  review note's innerHTML on every completion.
+- **Two ways out, and practise is the primary.** *Save and add another* keeps
+  her here with an empty form; *Save and practise now* saves the card and drops
+  her straight into it — `startPractice([saved])`, the same one-card queue the
+  phrase sheet's "Practise now" already starts. A card saved and never drilled
+  is where this app leaks, so the drill is the green one.
+
+Deb-o-lingo has this in the same shape — it is the same file with the names
+changed, and this was ported from there. Xerra has it too, with one difference
+that follows from its decks: its "practise now" starts the card's whole deck
+positioned at the new card rather than a queue of one, because it has a deck to
+carry on through.
+
 ### The Add review says the card out loud, and can be sent back
 
 A generated card used to be checkable only by reading it. The review opens with
@@ -275,9 +305,9 @@ one step up.
   inputs with its corrected versions, so re-steering it meant editing the
   assistant's rewrite of your own words. Undo puts the raw three back, hides
   the review and the chat, and bumps `repliesToken` — a reply still in flight
-  answers a card that no longer exists. The review notice is always shown now
-  (with a fallback line), because a completion with no `reviewNote` would
-  otherwise have nowhere to hang the Undo.
+  answers a card that no longer exists. The review note is always shown (with
+  a fallback line), because a completion with no `reviewNote` would otherwise
+  leave the hint under it hanging on nothing.
 - The two review buttons **stack** rather than sharing a row: at 390px both
   wrap onto a second line and go 70px tall.
 
@@ -695,10 +725,17 @@ Before the knock fix the tapped one came back at 1.0× gain; before the
 symmetric fix the three model clips came back 5.9 dB apart.
 
 For the Add review: the preview line follows an edit to the Spanish box, a
-blank `reviewNote` still gets a notice with an Undo in it, `#edit-inputs`
+blank `reviewNote` still gets a notice, `#edit-inputs`
 focuses `#add-situation`, `#try-again` posts the edited situation, and
 `#undo-complete` restores all three raw inputs and re-hides `#card-preview`
-and `#add-chat`.
+and `#add-chat`. Its order is worth asserting on directly: the review card's
+children are the preview line, `#review-note`, `.regen-hint`, the two fields,
+`#result-replies` and the button row, in that order, with `#try-again` and
+`#undo-complete` both inside the hint. `#save-another` leaves her on Add with
+an empty form and the card saved; `#save-practise` puts `.drill-text` on screen
+showing the card just made. Pick a phrase for that test that is *not* already
+in the course — the duplicate check reads `allPhrases()`, so "Otra, por favor."
+is refused before it ever saves.
 
 Anything touching Azure's real endpoint still can't be covered — no key in the
 repo, ever.
