@@ -57,7 +57,6 @@ const state = {
   scoringNow: false,
   levelTimer: null,
   banner: null, // { kind: great|ok|retry|neutral, score }
-  dictation: null,
 };
 
 // ------------------------------------------------------------------ helpers
@@ -332,7 +331,6 @@ function syncTabs() {
 function stopEverything() {
   player.stop();
   browserSpeech.stop();
-  state.dictation?.abort();
   if (recorder.isRecording) recorder.cancel();
   clearInterval(state.levelTimer);
   state.levelTimer = null;
@@ -2304,11 +2302,8 @@ function renderAdd() {
 
     <div class="card add-card">
       <div class="field situation-field">
-        <div class="field-head">
-          <label for="add-situation">Situation <span class="muted">(optional)</span></label>
-          <button class="dictate" type="button" data-dictate="add-situation" data-locale="en-US" aria-label="Dictate the situation">${micIcon()}</button>
-        </div>
-        <textarea id="add-situation" rows="2"></textarea>
+        <label for="add-situation">Situation <span class="muted">(optional)</span></label>
+        <textarea id="add-situation" rows="2" lang="en-US"></textarea>
       </div>
 
       ${composerField("add-target", "Spanish", COURSE_LANGUAGE, true)}
@@ -2361,12 +2356,6 @@ function renderAdd() {
   document.getElementById("open-assistant-settings")?.addEventListener("click", () => {
     state.tab = "settings";
     render();
-  });
-
-  view.querySelectorAll("[data-dictate]").forEach((button) => {
-    button.addEventListener("click", () =>
-      startDictation(button.dataset.dictate, button.dataset.locale, button)
-    );
   });
 
   const completeButton = document.getElementById("complete-card");
@@ -2722,61 +2711,16 @@ function cardChatPanel(host, title, getContext, { onKeep = null } = {}) {
   }
 }
 
+/* `lang` on the box is what dictation runs on now: it is what tells the phone
+   keyboard's own microphone which language to type, so the Spanish box takes
+   Spanish and the English one takes English without the app owning a button.
+   The in-app dictate buttons that used to sit beside these labels are gone —
+   see the note in CLAUDE.md before adding them back. */
 function composerField(id, label, locale, required = false) {
   return `<div class="field">
-    <div class="field-head">
-      <label for="${id}">${esc(label)}${required ? "" : ` <span class="muted">(optional)</span>`}</label>
-      <button class="dictate" type="button" data-dictate="${id}" data-locale="${locale}" aria-label="Dictate in ${esc(label)}">${micIcon()}</button>
-    </div>
+    <label for="${id}">${esc(label)}${required ? "" : ` <span class="muted">(optional)</span>`}</label>
     <textarea id="${id}" rows="3" lang="${locale}" autocapitalize="sentences"></textarea>
   </div>`;
-}
-
-function micIcon() {
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></svg>`;
-}
-
-/* Speaking into the card instead of typing. Safari doesn't implement the Web
-   Speech API for recognition, so on Mum's phone this falls back to a nudge
-   towards the keyboard's own microphone — which does the same job. */
-function startDictation(fieldID, locale, button) {
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Recognition) {
-    toast("Use the microphone on the keyboard to dictate here.");
-    document.getElementById(fieldID)?.focus();
-    return;
-  }
-
-  state.dictation?.abort();
-  const recognition = new Recognition();
-  state.dictation = recognition;
-  recognition.lang = locale;
-  recognition.interimResults = false;
-  recognition.continuous = false;
-  recognition.onstart = () => {
-    button.classList.add("listening");
-    button.setAttribute("aria-pressed", "true");
-  };
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map((result) => result[0]?.transcript ?? "")
-      .join(" ")
-      .trim();
-    const field = document.getElementById(fieldID);
-    if (field && transcript) {
-      field.value = [field.value.trim(), transcript].filter(Boolean).join(" ");
-      autosize(field);
-    }
-  };
-  recognition.onerror = (event) => {
-    if (event.error !== "aborted") toast("Dictation didn't catch that. The keyboard microphone works too.");
-  };
-  recognition.onend = () => {
-    if (state.dictation === recognition) state.dictation = null;
-    button.classList.remove("listening");
-    button.setAttribute("aria-pressed", "false");
-  };
-  recognition.start();
 }
 
 // ---------------------------------------------------------------- settings
