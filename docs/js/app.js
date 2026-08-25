@@ -946,6 +946,46 @@ function currentPhrase() {
   return state.lesson?.queue[state.lesson.index] ?? null;
 }
 
+/* Deleting a card has to reach the lesson, because the queue holds the phrase
+   *objects* (decorated copies at that) rather than their ids: `removePhrase`
+   takes the card out of the library and leaves the lesson showing it, with the
+   progress bar still counting it — the tap reads as the delete button having
+   stopped working. Both delete buttons come through `deletePhrase`.
+
+   The card she is looking at stays the card she is looking at: the index
+   follows the current phrase to its new position, and only moves when the
+   current phrase is the one being deleted, in which case the next card slides
+   into its place. False means there is nothing left to show. */
+function dropFromQueue(phraseID) {
+  const lesson = state.lesson;
+  if (!lesson) return false;
+  const at = lesson.queue.findIndex((p) => p.id === phraseID);
+  if (at === -1) return false;
+  const current = currentPhrase();
+  lesson.queue = lesson.queue.filter((p) => p.id !== phraseID);
+  if (!lesson.queue.length) return false;
+  const stayingPut = current && current.id !== phraseID
+    ? lesson.queue.findIndex((p) => p.id === current.id)
+    : -1;
+  lesson.index = stayingPut === -1 ? Math.min(at, lesson.queue.length - 1) : stayingPut;
+  return true;
+}
+
+/* The one delete, shared by the phrase sheet and the editor. Deleting the last
+   card of a lesson leaves it rather than sitting on an empty drill. */
+async function deletePhrase(phrase) {
+  stopEverything();
+  const drilling = state.stage === "drill" && Boolean(state.lesson);
+  const queued = Boolean(state.lesson?.queue.some((p) => p.id === phrase.id));
+  await library.removePhrase(phrase.id);
+  const carryOn = dropFromQueue(phrase.id);
+  closeSheet();
+  toast("Card deleted.");
+  if (drilling && carryOn) loadPhrase();
+  else if (drilling && queued) quitLesson();
+  else render();
+}
+
 async function loadPhrase() {
   const phrase = currentPhrase();
   state.modelBlob = null;
@@ -1978,12 +2018,9 @@ function showPhrase(phrase) {
      }`
   );
 
-  armDelete(document.getElementById("p-delete"), "Tap again to delete for good", async () => {
-    await library.removePhrase(phrase.id);
-    closeSheet();
-    toast("Card deleted.");
-    render();
-  });
+  armDelete(document.getElementById("p-delete"), "Tap again to delete for good", () =>
+    deletePhrase(phrase)
+  );
 
   document.getElementById("p-practise").onclick = () => {
     closeSheet();
@@ -2154,12 +2191,12 @@ function editPhrase(phrase, onSaved = null) {
     render();
   });
 
-  armDelete(document.getElementById("f-delete"), "Tap again to delete for good", async () => {
-    await library.removePhrase(phrase.id);
-    closeSheet();
-    toast("Card deleted.");
-    render();
-  });
+  /* Deleting from the editor is the lesson's delete as well — it is what the
+     lesson bar's EDIT button opens — so it goes through the shared one, which
+     takes the card out of the queue on the way. */
+  armDelete(document.getElementById("f-delete"), "Tap again to delete for good", () =>
+    deletePhrase(phrase)
+  );
 }
 
 /* "Rebuild the rest with AI" — the same /complete-card call the Add tab makes,

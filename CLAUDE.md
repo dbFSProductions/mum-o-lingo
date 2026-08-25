@@ -175,6 +175,24 @@ another "hidden ids" store. The sheet says so rather than leaving Mum hunting
 for a button that isn't there. If hiding course cards is ever wanted, that's
 the design to have, not a `removePhrase` that silently does nothing.
 
+**Deleting reaches the lesson too, and that is what the fix was.** The queue
+holds decorated *copies*, not ids, so `removePhrase` on its own took the card
+out of the library and left the lesson showing it with the bar still counting
+it — reported in Xerra as "delete phrase has stopped working", which is exactly
+what it looks like: the sheet closes, the card is gone from storage, and there
+it still is. `deletePhrase(phrase)` is the one delete now — the phrase sheet's
+armed button and the editor's both call it, and the editor's *is* the lesson's,
+since the lesson bar's EDIT is what opens it. `dropFromQueue` is the half that
+reaches the lesson: the card Mum is looking at stays the card Mum is looking at,
+the index only moves when the current card is the one deleted (the next slides
+into its place), and an emptied queue quits the lesson rather than leaving an
+empty drill.
+
+Worth asserting with three own cards seeded: deleting the one in view from EDIT
+puts the next card in `.drill-text`, deleting the only card in a lesson puts the
+path back, and the sheet's delete still takes two taps. Xerra has the same fix
+in the same shape.
+
 Her own cards ride the path as a generated unit, **Lo tuyo**, chunked five to a
 lesson in creation order (`own-1`, `own-2`, …). The ids are stable as cards are
 appended; deleting one can reshuffle membership, which costs at most a
