@@ -255,6 +255,33 @@ here, which now means the top of the card rather than the bottom.
 It stays labelled **(optional)**, honestly: `completeCard` needs Spanish or
 English, so a situation on its own can't build a card.
 
+### The composer has no dictate buttons
+
+Each of the three boxes used to carry a green microphone beside its label,
+running the Web Speech API's recogniser into the field. They are gone, and the
+reason is that on the one device that matters they never worked: Safari does
+not implement `SpeechRecognition`, so on Mum's phone every one of them fell
+through to a toast saying *use the microphone on the keyboard instead* — a
+button whose whole job was to point at a different button.
+
+What does the work now is `lang` on the textarea, which was already there:
+`es-ES` on the Spanish box and `en-US` on the other two, so the keyboard's own
+dictation key types the right language into whichever box has the cursor. That
+is the same arrangement Sobre mí's answer box has always relied on. The
+situation box gained an explicit `lang="en-US"` in the same change, since it had
+been leaning on the page default.
+
+Removed with them: `micIcon`, `startDictation`, `state.dictation` and its abort
+in `stopEverything`, the `.dictate` rules and the `dictation-pulse` keyframes.
+`.field-head` went too — it existed to put a label and a button on one line, and
+with the button gone the composer's labels are styled by `.add-card .field > label`
+instead. The boxes stay `div.field` rather than `label.field`, because the
+composer's spacing comes from the "or" divider and `label.field`'s bottom margin
+would break it.
+
+**Xerra still has the buttons.** That is now a deliberate divergence rather than
+a port waiting to happen; don't bring them back as a "keep them in step" fix.
+
 ### The Add review reads in one direction
 
 Preview line, then what the assistant did and why, then the way back if that
@@ -724,7 +751,9 @@ speech-like crest the limiter bends well under half a per cent of the samples.
 Before the knock fix the tapped one came back at 1.0× gain; before the
 symmetric fix the three model clips came back 5.9 dB apart.
 
-For the Add review: the preview line follows an edit to the Spanish box, a
+For the Add review: `.dictate` and `[data-dictate]` match nothing anywhere in
+the app and the three boxes still carry their `lang` (`es-ES`, `en-US`,
+`en-US`), the preview line follows an edit to the Spanish box, a
 blank `reviewNote` still gets a notice, `#edit-inputs`
 focuses `#add-situation`, `#try-again` posts the edited situation, and
 `#undo-complete` restores all three raw inputs and re-hides `#card-preview`
@@ -770,6 +799,10 @@ tell you which one you forgot.
 ### Where the three forks still differ
 
 Nothing is waiting to be ported now. What's left is deliberate:
+
+- **The composer's dictate buttons.** Xerra has them; here they are gone,
+  because Safari has no `SpeechRecognition` and they only ever pointed at the
+  keyboard's own microphone. See *The composer has no dictate buttons*.
 
 - **The editor's AI rebuild handles replies differently.** Here `wireEditorAI`
   reports whether the card in the boxes is the assistant's rewrite, and Save
