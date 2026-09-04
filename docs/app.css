@@ -23,6 +23,10 @@
   --purple: #ce82ff;
   --purple-dark: #a568cc;
   --amber: #cd9d00;
+  /* Purple as lettering rather than as a fill — the same trick as --amber
+     above. --purple is a background colour and disappears as text on white;
+     this is the keyword picture's ink. */
+  --purple-ink: #8e4ec6;
 
   --accent: var(--green);
   --you: var(--blue);
@@ -49,6 +53,7 @@
     --text-3: #6d8391;
     --line: #37464f;
     --amber: #e9b83f;
+    --purple-ink: #d9b0ff;
   }
 }
 
@@ -511,6 +516,82 @@ button { font: inherit; }
   margin-bottom: 3px;
 }
 
+/* ---------------------------------------------------- the keyword picture */
+
+/* Vocabulary by absurd mental image: the word sounds like something in
+   English, and one ridiculous scene holds that sound and the meaning together.
+   Purple because purple is already what memory looks like here — it is the
+   level-two badge and it is Lo tuyo.
+
+   Louder than the tip it sits near, and that is deliberate. On a Palabras card
+   the picture is the thing being learnt; the tip is how to say what the picture
+   just handed back. So the scene is set at reading size in the body ink rather
+   than at note size in grey, and the sound bridge is the biggest line in the
+   block. */
+.picture-note {
+  background: color-mix(in srgb, var(--purple) 14%, transparent);
+  border-radius: 12px;
+  padding: 11px 13px 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.42;
+  color: var(--text);
+}
+.picture-note strong {
+  display: block;
+  color: var(--purple-ink);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+.picture-sounds {
+  display: block;
+  color: var(--purple-ink);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  margin-bottom: 5px;
+}
+/* The tint is the block; the card around it is only there to sit in the
+   drill's rhythm, so it keeps its border and gives up its padding. */
+.picture-card { padding: 8px; }
+
+/* The drawing, when there is one. Held to the width of the block it sits in
+   and given the tint's own rounding, so it reads as part of the picture rather
+   than as an attachment to it. */
+.picture-art:not(:empty) { margin-top: 10px; }
+/* Capped, and never cropped. A square drawing at the full width of the block
+   is 300px tall on a 390px phone, which pushes Listen and the record button
+   off the bottom of the card — the picture is a hook, not the lesson. `contain`
+   rather than `cover` because a mnemonic with its corner cut off may have lost
+   the half that carries the sound. */
+.picture-image {
+  display: block;
+  width: 100%;
+  max-height: 210px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.picture-art-row { display: flex; gap: 14px; margin-top: 6px; }
+.picture-art-row .link { padding: 0; font-size: 0.78rem; }
+.picture-draw { width: 100%; }
+.picture-drawing { margin: 0; }
+
+/* The hint button at level two, tinted rather than plain — because the two
+   buttons it stands next to are not equals. Reaching for the picture is the
+   method working; Show me hands over the answer. So the picture is the one
+   the eye lands on, and Show me stays a plain white button below it. Softer
+   than a filled .btn-primary all the same: it is a hint, not the way on. */
+.btn-picture {
+  background: color-mix(in srgb, var(--purple) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--purple) 45%, var(--line));
+  color: var(--purple-ink);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--purple) 45%, var(--line));
+}
+.btn-picture:active { box-shadow: none; }
 
 /* ------------------------------------------------------- level two (recall) */
 

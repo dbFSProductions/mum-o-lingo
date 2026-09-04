@@ -683,6 +683,378 @@ export const COURSE = [
       },
     ],
   },
+  /* Palabras — vocabulary by the keyword-picture method.
+   *
+   * Every other unit teaches a phrase you say. This one teaches single words,
+   * and it teaches them the way people who are good at this actually do it:
+   * you hear an English sound inside the Spanish word, and you build one
+   * ridiculous picture out of that sound and the meaning. `tenedor` sounds
+   * like "ten-a-door", so a ten-pound note is pinned to a door with a fork,
+   * and the word is never a coin-flip again.
+   *
+   * Two fields carry it. `sounds` is the bridge — what the word sounds like in
+   * English, and nothing else. `picture` is the scene, and it has exactly one
+   * job: to contain BOTH the sound and the meaning, so that recalling the
+   * picture hands back the word. A picture with the sound in it but not the
+   * meaning ("a ten-pound note on a door") is useless; so is a pretty one
+   * with neither.
+   *
+   * Rules for writing more of these:
+   *   - Strange beats sensible. The scene should be impossible, or violent, or
+   *     rude, or all three. A plausible picture is forgotten by Thursday.
+   *   - The sound bridge has to be a sound she already owns in English. Don't
+   *     bridge to another Spanish word.
+   *   - Never bridge to a sound the word doesn't have. `llave` is not "lava",
+   *     however good the picture would be — the mnemonic would teach the
+   *     wrong mouth, and a mnemonic that teaches a mispronunciation is worse
+   *     than no mnemonic at all. The focusNote still does the real
+   *     pronunciation work; the picture only has to get her to the word.
+   *   - One picture per word, one sentence long. It's a hook, not a story.
+   *
+   * The nouns carry their article in `text` — "el tenedor", not "tenedor" —
+   * because a noun learnt without its gender has to be learnt twice.
+   *
+   * Deb-o-lingo has this unit too, and its pictures are deliberately not these
+   * ones: hers are dollars and her own week, these are pounds and the trip. */
+  {
+    id: "palabras",
+    title: "Palabras",
+    subtitle: "Everyday words, each with a silly picture to hang it on",
+    color: "var(--purple)",
+    colorDark: "var(--purple-dark)",
+    lessons: [
+      /* The ids are not in lesson order, and that is on purpose: these lessons
+         were re-cut after a cull and the cards kept the ids they were born
+         with. Ids are referenced by saved attempts and are never renumbered —
+         which lesson a card sits in is free to change, its id is not. */
+      {
+        id: "palabras-1",
+        title: "At the table",
+        phrases: [
+          {
+            id: "palabras-1-1",
+            text: "el tenedor",
+            translation: "the fork",
+            sounds: "ten-a-door",
+            picture:
+              "A ten-pound note pinned to the front door — and the pin is a fork.",
+            focusNote:
+              "te-ne-DOR, stress right at the end. Soft d, and the final r is one light tap.",
+          },
+          {
+            id: "palabras-1-2",
+            text: "el hielo",
+            translation: "the ice",
+            sounds: "YELLOW",
+            picture:
+              "Yellow ice cubes bobbing in your glass of cava. Nobody will say where they came from.",
+            focusNote:
+              "YE-lo — the h is silent, always, and 'hie' runs together into 'ye'. Never 'hi-elo'.",
+          },
+          {
+            id: "palabras-1-3",
+            text: "la copa",
+            translation: "the (wine) glass",
+            sounds: "COPPER",
+            picture:
+              "Your cava is served in a copper cup gone green round the rim, and it tastes of pennies.",
+            focusNote:
+              "KO-pa, two pure short vowels. This is the glass you ask for cava in — 'una copa de cava'.",
+          },
+          {
+            id: "palabras-1-5",
+            text: "la cuenta",
+            translation: "the bill",
+            sounds: "COUNTER",
+            picture:
+              "The waiter counts your bill out on an enormous wooden abacus at the counter, bead by bead.",
+            focusNote:
+              "KWEN-ta — 'cue' is one syllable, kwen. Same root as 'count', which is exactly what it is.",
+          },
+          {
+            id: "palabras-3-2",
+            text: "el jamón",
+            translation: "the ham",
+            sounds: "ha! MOAN",
+            picture:
+              "The whole leg of ham on the counter moans out loud every time the knife goes in, and the man laughs.",
+            focusNote:
+              "ha-MON, and that j is the throat-clearing one — like the ch in Scottish 'loch'. Stress the MON.",
+          },
+        ],
+      },
+      {
+        id: "palabras-2",
+        title: "The trip",
+        phrases: [
+          {
+            id: "palabras-10-1",
+            text: "el avión",
+            translation: "the plane",
+            sounds: "a BEE ON",
+            picture:
+              "A bee on the wing of the plane, hanging on grimly the whole way from Gatwick.",
+            focusNote:
+              "a-BYON — the v is a b, and 'ió' is one syllable. Stress at the end, where the accent is.",
+          },
+          {
+            id: "palabras-10-2",
+            text: "la maleta",
+            translation: "the suitcase",
+            sounds: "MALLET-a",
+            picture:
+              "You shut the suitcase with a mallet, and the presents inside make a noise you decide to ignore.",
+            focusNote:
+              "ma-LE-ta, three syllables, stress in the middle.",
+          },
+          {
+            id: "palabras-4-1",
+            text: "el regalo",
+            translation: "the present",
+            sounds: "REGAL",
+            picture:
+              "A present so regal — gold paper, velvet ribbon — that nobody dares open it, and it sits there all fortnight.",
+            focusNote:
+              "re-GA-lo, tapped r at the start, stress on GA.",
+          },
+          {
+            id: "palabras-3-4",
+            text: "la bolsa",
+            translation: "the bag",
+            sounds: "BOLSTER",
+            picture:
+              "You bolster the shopping bag with a sofa cushion so the eggs survive the walk back.",
+            focusNote:
+              "BOL-sa. Short pure o — no English 'boh-oo' slide. They will ask if you want one.",
+          },
+          {
+            id: "palabras-10-4",
+            text: "el paseo",
+            translation: "the stroll",
+            sounds: "PASS 'ay-oh'",
+            picture:
+              "On the evening stroll you pass every single person you know, and say 'ay-oh' to each one of them.",
+            focusNote:
+              "pa-SE-o, three syllables, stress on SE. The evening stroll is a real institution — join in.",
+          },
+        ],
+      },
+      {
+        id: "palabras-3",
+        title: "Words you need every hour",
+        phrases: [
+          {
+            id: "palabras-6-1",
+            text: "tener",
+            translation: "to have",
+            sounds: "a TENNER",
+            picture:
+              "All you have to your name is one tenner, and you keep patting your pocket to check it is still there.",
+            focusNote:
+              "te-NER, stress at the end — not like 'tenner', which lands at the front. Tapped r. 'Tengo' is I have.",
+          },
+          {
+            id: "palabras-6-2",
+            text: "querer",
+            translation: "to want, to love",
+            sounds: "care — RARE",
+            picture:
+              "You want your steak so rare that you care about nothing else, and you say so twice, loudly.",
+            focusNote:
+              "ke-RER — 'qu' is a plain k, the u is silent, and both r's are single taps. 'Quiero' is I want.",
+          },
+          {
+            id: "palabras-6-4",
+            text: "ir",
+            translation: "to go",
+            sounds: "EAR",
+            picture:
+              "You go everywhere led by your own ear, dragged along by it like a boy out of a sweet shop.",
+            focusNote:
+              "One syllable, 'eer'. Two letters, and the most irregular verb in the language — 'voy' is I go.",
+          },
+          {
+            id: "palabras-6-5",
+            text: "saber",
+            translation: "to know (a fact)",
+            sounds: "SABRE",
+            picture:
+              "You know the answer because there is a sabre held at your throat until you say it out loud.",
+            focusNote:
+              "sa-BER, tapped r. 'Sé' is I know — one syllable, and nothing like the infinitive.",
+          },
+          {
+            id: "palabras-5-3",
+            text: "ahora",
+            translation: "now",
+            sounds: "an HOUR",
+            picture:
+              "You ask when, they say 'an hour', and you shout back that you meant NOW. It sounds like 'an hour' and means the opposite.",
+            focusNote:
+              "a-O-ra. The h is silent, so it is three vowels and a tapped r — ah-OH-ra.",
+          },
+        ],
+      },
+      {
+        id: "palabras-4",
+        title: "Asking questions",
+        phrases: [
+          {
+            id: "palabras-7-1",
+            text: "¿dónde?",
+            translation: "where?",
+            sounds: "DON, all day",
+            picture:
+              "A mafia don sits in a deckchair at the junction all day, and he is the only one who knows where anything is.",
+            focusNote:
+              "DON-de, stress the first syllable — that's what the accent is telling you. Soft d at the end.",
+          },
+          {
+            id: "palabras-7-2",
+            text: "¿cuándo?",
+            translation: "when?",
+            sounds: "KWAN DO",
+            picture:
+              "Your tae kwon do instructor will tell you exactly when the class starts, and never where it is.",
+            focusNote:
+              "KWAN-do — 'cua' is one syllable, kwan. The accent again means the stress is at the front.",
+          },
+          {
+            id: "palabras-7-3",
+            text: "¿cuánto?",
+            translation: "how much?",
+            sounds: "QUANTITY",
+            picture:
+              "The fish man weighs the quantity on scales made of ten-pound notes and asks how much you want.",
+            focusNote:
+              "KWAN-to. Same 'cua' as cuándo, and it really is the quantity word — same Latin root.",
+          },
+          {
+            id: "palabras-7-4",
+            text: "¿quién?",
+            translation: "who?",
+            sounds: "KEN",
+            picture:
+              "Ken from next door is knocking at midnight in his dressing gown and nobody knows who he is.",
+            focusNote:
+              "kyen, one syllable. 'qu' is a plain k again, so never 'kwee-en'.",
+          },
+          {
+            id: "palabras-7-5",
+            text: "¿por qué?",
+            translation: "why?",
+            sounds: "poor KAY",
+            picture:
+              "Poor Kay asks why, right through Christmas dinner, and not one person answers her.",
+            focusNote:
+              "por-KE, stress on the KE — that accent is doing real work. Without it, 'porque' is *because*.",
+          },
+        ],
+      },
+      {
+        id: "palabras-5",
+        title: "When, and how often",
+        phrases: [
+          {
+            id: "palabras-8-1",
+            text: "hoy",
+            translation: "today",
+            sounds: "OY!",
+            picture:
+              "Someone leans out of a window and shouts 'OY!' at you — today, and only today, never again.",
+            focusNote:
+              "One syllable, 'oy'. The h is silent, the way it always is.",
+          },
+          {
+            id: "palabras-8-3",
+            text: "ayer",
+            translation: "yesterday",
+            sounds: "a YEAR",
+            picture:
+              "Yesterday feels like a whole year ago, because you spent every hour of it in the air getting here.",
+            focusNote:
+              "a-YER, stress at the end. Two syllables and a tapped r.",
+          },
+          {
+            id: "palabras-8-5",
+            text: "tarde",
+            translation: "late, afternoon",
+            sounds: "TAR day",
+            picture:
+              "You are late because you stepped in tar on the way out, and the whole afternoon goes on getting free of it.",
+            focusNote:
+              "TAR-de, soft d. Same word does late and afternoon — 'buenas tardes' is the one you know.",
+          },
+          {
+            id: "palabras-5-1",
+            text: "siempre",
+            translation: "always",
+            sounds: "SEE 'EM PRAY",
+            picture:
+              "Every time you pass that little church, you see 'em pray. Every time, without fail.",
+            focusNote:
+              "SYEM-pre — 'sie' is one syllable, syem. Tapped r at the end.",
+          },
+          {
+            id: "palabras-5-2",
+            text: "nunca",
+            translation: "never",
+            sounds: "NOON car",
+            picture:
+              "The station clock crawls towards noon and stops a minute short. Noon never comes, and nor does the car.",
+            focusNote:
+              "NUN-ka. Pure u, said 'oo'. Stress the first syllable.",
+          },
+        ],
+      },
+      {
+        id: "palabras-6",
+        title: "Odds and ends",
+        phrases: [
+          {
+            id: "palabras-3-5",
+            text: "el dinero",
+            translation: "the money",
+            sounds: "De Niro",
+            picture:
+              "Robert De Niro at the fish stall, paying for everyone's shopping in cash, note by note.",
+            focusNote:
+              "di-NE-ro, stress on NE. Soft d to start, tapped r in the middle.",
+          },
+          {
+            id: "palabras-9-3",
+            text: "el dolor",
+            translation: "the pain, the ache",
+            sounds: "DOH! + LAW",
+            picture:
+              "Every twinge makes you shout 'doh!' and mutter that there ought to be a law against this much pain.",
+            focusNote:
+              "do-LOR, stress at the end. English 'dolorous' is the same word wearing a coat.",
+          },
+          {
+            id: "palabras-9-5",
+            text: "la receta",
+            translation: "the prescription",
+            sounds: "RECIPE-a",
+            picture:
+              "The chemist hands you a recipe instead of a prescription: two eggs, a lemon, and lie down until Thursday.",
+            focusNote:
+              "re-THE-ta — the Spain c again. It really does mean recipe too, which is why the picture works.",
+          },
+          {
+            id: "palabras-5-5",
+            text: "todavía",
+            translation: "still, not yet",
+            sounds: "TOAD a VIA",
+            picture:
+              "A toad sitting in the middle of the road, still there an hour later, refusing to move: 'toad-a-VIA!'",
+            focusNote:
+              "to-da-VEE-a, stress on VEE. Soft d in the middle, and the í is a pure ee.",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 // Flat lookups, built once.

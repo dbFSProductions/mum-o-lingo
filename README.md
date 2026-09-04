@@ -9,7 +9,7 @@ and chicken. You hear a native voice, record yourself saying the same thing,
 and the app shows you how close you got: side-by-side waveforms, an intonation
 comparison, and a word-by-word pronunciation score.
 
-Five units, fifteen lessons, seventy-six phrases:
+Six units, twenty-one lessons, a hundred and five cards:
 
 | Unit | What it's for |
 |---|---|
@@ -18,6 +18,7 @@ Five units, fifteen lessons, seventy-six phrases:
 | **El restaurante** | Getting a table, ordering fish, and saying it was lovely |
 | **El mercado** | The fish counter, cheese and ham, chicken, and paying |
 | **La Navidad** | Just landed, Christmas greetings, and the Christmas table |
+| **Palabras** | Twenty-nine everyday words, each with a daft picture to hang it on |
 
 It looks a little like a certain green owl on purpose, but there's no ads, no
 gems, no guilt — and every phrase is here because Mum will actually need it
@@ -53,6 +54,26 @@ A few things worth knowing:
   the whole course plus your own cards.
 - **Star anything.** Tap the star on a phrase and it gathers into a Favourites
   node next to Repaso, for the handful that keep tripping you up.
+- **Palabras — words with a picture nailed to them.** The purple unit near the
+  bottom of the path teaches single words the way people who are good at this
+  actually do it: you hang the word on something ridiculous and it stops being
+  a coin-flip. *Tenedor* is a ten-pound note pinned to the front door, and the pin is a fork (and *hielo* is a glass of cava with yellow ice cubes in it). Every
+  word gives you what it sounds like in English and one daft scene to picture.
+  When one of them goes up to level 2 there's a **Show me the picture** button
+  sitting above **Show me** — reach for the picture first. Remembering it *is*
+  the trick working; being handed the answer isn't.
+- **And it can draw them.** Under the picture on any word there's **Draw this
+  for me** — Gemini makes an actual picture of the scene, and it stays on the
+  card afterwards, offline, until you remove it. It only ever draws when you
+  ask: picturing it in your own head is what makes the word stick, and the
+  drawing is there for the ones that won't come. On the phrase sheet you can
+  ask for another go at it, or throw it away.
+- **Hang a picture on any word you keep losing.** It doesn't have to be one of
+  those twenty-nine. Open any card, tap **Edit**, and at the bottom there are
+  two boxes: *Sounds like* and *Picture it*. One you make up yourself will beat
+  anything written for you — the ruder and the more impossible, the better — but
+  there's an **Invent a picture for me** button if you're stuck, and you can
+  rewrite whatever it gives you before you save.
 - **What they might say back.** Under the lesson, and on any phrase in the
   Phrases tab, there's *You might hear back* — two or three things a person
   actually replies, each with a play button and its English. Saying your line

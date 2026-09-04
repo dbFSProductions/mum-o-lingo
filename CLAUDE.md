@@ -112,6 +112,9 @@ names ever change, they are in `saludos-2-2`, `saludos-2-3` and `cava-3-6`.
 
 - **Phrase ids are stable and referenced by saved attempts.** Never renumber;
   append.
+- The **Palabras** cards carry `sounds` and `picture` — see *A word, a sound
+  and one ridiculous picture* below. Both are editable fields, so they are
+  hers to rewrite and any card may have them, not only a Palabras word.
 - A lesson is ~5 phrases — one cup of tea. Keep them that size.
 - Every phrase has a `focusNote` written for a **British** English speaker
   learning **Castilian** Spanish — soft d's, silent h, b=v, the 'th' in
@@ -150,6 +153,14 @@ is stored beside it, keyed by phrase id:
 and the replies onto a stored phrase — anything that reads a phrase for display
 or for drilling must go through it, or Mum's edit will be invisible in that one
 place. Export/import carries all seven stores plus the transcript.
+
+**The keyword pictures *are* edits, and that is the whole reason they cost no
+new store.** A picture is a field on a card like `focusNote` is — `sounds` and
+`picture` are in `EDITABLE`, so writing one over a course word is an override,
+"Reset to the original" is the way back from a worse one, and a word she wrote
+from scratch carries it in `mumolingo.phrases` with everything else. Compare
+notes and replies below, which are the opposite case and needed stores of their
+own.
 
 **Notes and replies are not edits, so they are not overrides.** An override is
 a diff against content.js that "Reset to the original" throws away; losing the
@@ -478,6 +489,103 @@ deck list, this has a path) and the Spanish name.
 
 ---
 
+## A word, a sound and one ridiculous picture
+
+The **Palabras** unit (six lessons, twenty-nine words, purple) is vocabulary by
+the keyword method: you hear an English sound inside the Spanish word, and you
+build one absurd scene out of that sound and the meaning. `tenedor` sounds like
+"ten-a-door", so a ten-pound note is pinned to the front door and the nail is a fork. It is
+the request this app was asked for in exactly those words, and it is the one
+unit here that teaches single words rather than things you say.
+
+- **Two fields, and the split is load-bearing.** `sounds` is the bridge — what
+  the word sounds like in English and nothing else. `picture` is the scene, and
+  its one job is to contain **both** the sound and the meaning, so that
+  recalling the scene hands back the word. A scene with the sound but not the
+  meaning is useless; so is a pretty one with neither. `picture` alone renders;
+  `sounds` alone renders nothing, being a riddle with its answer torn off.
+- **Never bridge to a sound the word hasn't got.** `llave` is not "lava",
+  however good the picture would be. A mnemonic that teaches a mispronunciation
+  is worse than no mnemonic, and this app scores pronunciation for a living.
+  The `focusNote` still does the real work; the picture only has to get her to
+  the word. The rules for writing more of them are in the unit's own comment in
+  `content.js`.
+- **They are ordinary editable fields, not a new store.** That buys the
+  editor, the override diff, Reset, export and import for nothing — and it
+  means *any* card can carry a picture, not just a Palabras word, which is
+  where most of the value ends up: a picture on the one word inside a phrase
+  she keeps losing. Resist making them a special kind of card, for the reason
+  Sobre mí gives above.
+- **The drill's gates, and the picture takes a third position.** At level one
+  it waits behind `showTranslation` like the notes do — the scene names the
+  English, so printing it under a hidden meaning would be pointless. At level
+  two it is *the point*: the Spanish is being withheld and the picture is the
+  road back to it, so it is offered as **Show me the picture** rather than
+  shown, above the plain **Show me**.
+- **Reaching for the picture is not peeking.** `state.pictured` is its own
+  flag and deliberately does not set `peeked`: Show me hands over the answer,
+  the picture makes her produce it, and that is the method working exactly as
+  intended. The attempt is still filed as `"recall"`. The hint button is tinted
+  (`.btn-picture`) and Show me is left plain, because the hierarchy is the
+  pedagogy.
+- **"Invent a picture for me" goes through `/chat`, and that is not laziness.**
+  The Worker lives in Xerra's repo and serves all of these apps, so a feature
+  needing a new endpoint needs a deploy over there first. This one needs
+  nothing: it is one turn of the same conversation `cardChatPanel` already has,
+  with the question written for her instead of by her. The answer is asked for
+  as two labelled lines and parsed back into the two boxes; a model that
+  ignores the format costs only the split, since the whole reply lands in
+  Picture. **Don't "improve" this into a `/complete-card` field or an endpoint
+  of its own** without reading what replies did to the Add tab.
+- **Gemini will draw the scene, and only when asked.** `/picture` on the
+  Worker turns the `picture` sentence into an image; the drawing is kept in
+  IndexedDB by phrase id and shown inside the same block, behind the same
+  gates, as the text. It is never fetched on its own initiative, and that is
+  the pedagogy rather than the bill: imagining the scene yourself is the
+  technique working, and a picture handed over unasked removes the effort that
+  makes it stick. The sentence stays the mnemonic; the drawing is for when the
+  scene will not come.
+- **The drawing is its own endpoint, its own model and its own failure.** An
+  image is the biggest, slowest thing the Worker produces, so it earns an
+  endpoint for the reason replies did — see what putting them on
+  `/complete-card` cost. It runs `GEMINI_IMAGE_MODEL` alone (nothing else in
+  the chain can draw, and a model that cannot draw cannot half-draw), sends no
+  `generation_config` (an image model has no `thinking_level` and rejects the
+  field), and gets 40s rather than the 25s sized for a card. **This one did
+  need a Worker change**, unlike everything else in this unit — the Worker
+  lives in Xerra's repo and `worker/**` is on a deploy trigger, so merging it
+  there ships it for all three apps at once.
+- **Third IndexedDB store, so `DB_VERSION` went to 2.** The upgrade handler
+  creates whatever is missing, so an existing install keeps its recordings and
+  cached audio and gains the box. Drawings are not in the export, for the same
+  reason recordings aren't: blobs stay on the device, and a restored backup
+  offers to draw them again.
+- **What comes back is shrunk before it is kept** — 512px, WebP where the
+  browser will encode it. A full-size render per word would outweigh the rest
+  of the app on a phone whose storage iOS is willing to evict.
+- **`outputImageOf` on the Worker reads the response forgivingly, and that is
+  not sloppiness.** There is no Gemini key in any of these repos and no image
+  fixture to replay, so the image path could not be exercised before it was
+  deployed; it accepts the bytes from `output_image` or from a `model_output`
+  step, under either spelling of the field names. If Google moves them, that
+  function is the fix and *"the model drew nothing"* on the phone is what
+  points at it.
+- **It sits in the editor, not on the sheet.** One implementation, reachable
+  from the phrase sheet's Edit and from the lesson's EDIT alike, and it lands
+  where the result can be rewritten — which matters, because a picture
+  Mum invents herself outlasts one she was handed. Nothing is written until
+  Save.
+- **Purple is the colour, and it was already spoken for.** Purple is what
+  memory looks like in this app: the level-two badge, Lo tuyo. `--purple-ink`
+  is new and is purple *as lettering*, on the `--amber` precedent — `--purple`
+  is a fill and vanishes as small text on white.
+
+The other fork has this unit too, with the same code and deliberately different
+pictures: hers are pounds and the Christmas trip, Deb's are dollars and her own week. Port the machinery, never the scenes — a picture is
+aimed at one mouth and one life, the same way a focusNote is.
+
+---
+
 ## The score is your weakest word
 
 Azure has no strictness setting worth having, and every number it returns is
@@ -691,7 +799,7 @@ cd docs && python3 -m http.server 8765   # http://127.0.0.1:8765
 ```
 
 Playwright against that URL beats clicking through. Worth asserting: no
-console errors on boot, the path shows 15 course nodes + Repaso with **nothing
+console errors on boot, the path shows 21 course nodes + Repaso with **nothing
 locked** (`.node.locked` should never match), the deepest lesson opens straight
 away with `.drill-text` populated, an edit to a course phrase drills as edited
 and Reset puts it back, a starred phrase raises the Favourites node, a saved
@@ -727,6 +835,34 @@ a second `/interview`, and `#about-reset` takes two taps and leaves the cards
 alone. For the version panel: `#s-running` and `#s-installed` agree after a
 clean install. Two smoke scripts covering all of that live in the session
 scratchpad rather than the repo — there's no test runner here on purpose.
+
+For the keyword pictures: `palabras-1` opens on "el tenedor" with a
+`.picture-note` carrying its `.picture-sounds`, and no `#picture-hint`;
+`saludos-1` has neither; with *Show the meaning up front* off the picture waits
+for `#reveal` alongside the translation. Seed four passing attempts on
+`palabras-1-1` and the same card offers `#picture-hint` with no `.picture-note`
+— pressing it paints the picture while `.drill-text` still reads *the fork*,
+`#listen` is still absent and the "Shown, not remembered" line is still off the
+card, which is the assertion that says peeking and picturing are different
+things. Searching Phrases for `ten-a-door` finds the word by its `sounds`
+alone; the sheet prints `.picture-note` flat; editing it writes an override
+holding `picture` and `sounds` and nothing else, the lesson drills the edited
+scene, and Reset empties the store. With `/chat` stubbed: the two labelled
+lines land in `#f-sounds` and `#f-picture`, an unlabelled reply lands whole in
+`#f-picture`, half a card refuses with a toast, a 503 is reported in
+`#f-picture-note` with the boxes untouched, and Cancel writes nothing.
+
+With `/picture` stubbed: no draw button at all with no assistant configured;
+`.picture-draw` is offered on a card with a scene and nothing is fetched until
+it is pressed; one press paints `.picture-image` from a blob URL; a reload
+shows it again with no second call; the blob in the `pictures` store is an
+image and smaller than what was sent; the sheet's `[data-undraw]` takes it out
+of storage and puts the offer back; and a 503 lands in `.picture-art-error`
+with the offer still there. The Worker half has a test of its own that drives
+`worker.fetch` with `globalThis.fetch` stubbed — it covers the three response
+shapes `outputImageOf` accepts, that the request carries no `generation_config`
+and names the image model, and that `/chat` still thinks at low and still
+leads with the fast model.
 
 For the weakest-word score, `attemptScore` is worth driving straight at the
 module: five words with a 61 among them returns 61 and not Azure's 93, an
@@ -839,6 +975,12 @@ Nothing is waiting to be ported now. What's left is deliberate:
   `content.js` should be ported between the three without rewriting the
   focusNotes, which are the pedagogy and are aimed at a different mouth in
   each repo.
-- **A fifth unit.** Deb-o-lingo has four; this has five, because the Christmas
-  trip is a fixed occasion with its own vocabulary and deserved its own strand
-  rather than being scattered through the others.
+- **A fifth unit.** Deb-o-lingo has four everyday units; this has five, because
+  the Christmas trip is a fixed occasion with its own vocabulary and deserved
+  its own strand rather than being scattered through the others. Both then
+  carry Palabras on top.
+- **The keyword pictures are in these two and not in Xerra at all.** The
+  Palabras unit and the `sounds`/`picture` pair are additive — a unit, two
+  fields in `EDITABLE`, one render helper and a hint button — so porting them
+  to Xerra is a day's work and mostly writing scenes. The machinery here is
+  Deb-o-lingo's, line for line; the pictures deliberately are not.

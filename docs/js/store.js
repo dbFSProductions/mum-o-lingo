@@ -30,7 +30,21 @@ const KEYS = {
 // stored as an override keyed by phrase id rather than as a copy — content.js
 // stays the source of truth, and a later course revision still reaches every
 // phrase Mum hasn't personally changed.
-const EDITABLE = ["text", "translation", "focusNote", "situation", "usageNote"];
+const EDITABLE = [
+  "text",
+  "translation",
+  "focusNote",
+  "situation",
+  "usageNote",
+  /* The keyword-picture pair — see the Palabras unit in content.js. They are
+     editable like anything else on a card, and deliberately so: a picture you
+     invented yourself outlasts one you were handed, so the course's version is
+     a starting point and "Reset to the original" is the way back from a worse
+     one. Any card can carry them, not just a Palabras word — Mum can hang a
+     picture on a word inside a phrase she keeps losing. */
+  "sounds",
+  "picture",
+];
 
 /* Cards the assistant writes about Mum's own life, from an English interview.
    They are ordinary cards of hers in every way — they drill, star, score,
@@ -55,9 +69,13 @@ export const RECALL_AFTER = 4;
 const RECALL_PASS = 75; // the same "understandable" line the lesson banner uses
 
 const DB_NAME = "mumolingo";
-const DB_VERSION = 1;
+/* Bumped to 2 for the pictures store. The upgrade handler creates whatever is
+   missing rather than assuming a fresh database, so an existing install keeps
+   its recordings and its cached model audio and simply gains the third box. */
+const DB_VERSION = 2;
 const STORE_MODEL = "modelAudio";
 const STORE_RECORDINGS = "recordings";
+const STORE_PICTURES = "pictures";
 
 // ---------------------------------------------------------------- IndexedDB
 
@@ -71,6 +89,7 @@ function openDB() {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_MODEL)) db.createObjectStore(STORE_MODEL);
       if (!db.objectStoreNames.contains(STORE_RECORDINGS)) db.createObjectStore(STORE_RECORDINGS);
+      if (!db.objectStoreNames.contains(STORE_PICTURES)) db.createObjectStore(STORE_PICTURES);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -125,6 +144,11 @@ export const audioStore = {
   getRecording: (key) => idbGet(STORE_RECORDINGS, key),
   deleteRecording: (key) => idbDelete(STORE_RECORDINGS, key),
   clearModelCache: () => idbClear(STORE_MODEL),
+
+  putPicture: (key, blob) => idbPut(STORE_PICTURES, key, blob),
+  getPicture: (key) => idbGet(STORE_PICTURES, key),
+  deletePicture: (key) => idbDelete(STORE_PICTURES, key),
+  clearPictures: () => idbClear(STORE_PICTURES),
 
   async usage() {
     if (!navigator.storage?.estimate) return null;
@@ -353,6 +377,8 @@ export const library = {
       situation: null,
       usageNote: null,
       focusNote: null,
+      sounds: null,
+      picture: null,
       ...phrase,
     };
     this.customPhrases.push(saved);
@@ -398,6 +424,8 @@ export const library = {
     for (const attempt of this.attemptsFor(phraseID)) {
       await audioStore.deleteRecording(attempt.id);
     }
+    // The drawing of its picture goes with it, like the recordings do.
+    await audioStore.deletePicture(phraseID);
     this.attempts = this.attempts.filter((a) => a.phraseID !== phraseID);
     this.customPhrases = this.customPhrases.filter((p) => p.id !== phraseID);
     this.favourites = this.favourites.filter((id) => id !== phraseID);
