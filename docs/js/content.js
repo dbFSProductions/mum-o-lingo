@@ -723,9 +723,13 @@ export const COURSE = [
     color: "var(--purple)",
     colorDark: "var(--purple-dark)",
     lessons: [
+      /* The ids are not in lesson order, and that is on purpose: these lessons
+         were re-cut after a cull and the cards kept the ids they were born
+         with. Ids are referenced by saved attempts and are never renumbered —
+         which lesson a card sits in is free to change, its id is not. */
       {
         id: "palabras-1",
-        title: "On the table",
+        title: "At the table",
         phrases: [
           {
             id: "palabras-1-1",
@@ -758,16 +762,6 @@ export const COURSE = [
               "KO-pa, two pure short vowels. This is the glass you ask for cava in — 'una copa de cava'.",
           },
           {
-            id: "palabras-1-4",
-            text: "la servilleta",
-            translation: "the napkin",
-            sounds: "serve a YETI",
-            picture:
-              "You serve a yeti his fish and he tucks a tablecloth-sized napkin into his collar.",
-            focusNote:
-              "ser-bi-YE-ta — v as b, and 'll' as y. Four syllables, stress on YE.",
-          },
-          {
             id: "palabras-1-5",
             text: "la cuenta",
             translation: "the bill",
@@ -776,78 +770,6 @@ export const COURSE = [
               "The waiter counts your bill out on an enormous wooden abacus at the counter, bead by bead.",
             focusNote:
               "KWEN-ta — 'cue' is one syllable, kwen. Same root as 'count', which is exactly what it is.",
-          },
-        ],
-      },
-      {
-        id: "palabras-2",
-        title: "At the restaurant",
-        phrases: [
-          {
-            id: "palabras-2-1",
-            text: "el pescado",
-            translation: "the fish (to eat)",
-            sounds: "PASO DOBLE",
-            picture:
-              "A fish in a little hat dancing the paso doble the length of your plate, castanets and all.",
-            focusNote:
-              "pes-KA-do, stress on KA. Final d soft to the point of vanishing: 'pes-KA-tho'.",
-          },
-          {
-            id: "palabras-2-2",
-            text: "las gambas",
-            translation: "the prawns",
-            sounds: "GAMS (legs)",
-            picture:
-              "A line of prawns doing the can-can along the bar — all those legs, kicking in time.",
-            focusNote:
-              "GAM-bas. The b is soft, halfway to a v. Plural, because they never come one at a time.",
-          },
-          {
-            id: "palabras-2-3",
-            text: "la carta",
-            translation: "the menu",
-            sounds: "CHART",
-            picture:
-              "The menu is a sailor's chart of the bay, and you order by pointing at where the fish was caught.",
-            focusNote:
-              "KAR-ta, tapped r. Ask for 'la carta' — 'el menú' in Spain means the set lunch, which is a different thing.",
-          },
-          {
-            id: "palabras-2-4",
-            text: "el camarero",
-            translation: "the waiter",
-            sounds: "CAMERA HERO",
-            picture:
-              "The waiter is a camera-hero: he photographs every plate from three angles before it leaves the kitchen.",
-            focusNote:
-              "ca-ma-RE-ro, stress on RE. Two tapped r's, neither of them rolled.",
-          },
-          {
-            id: "palabras-2-5",
-            text: "la mesa",
-            translation: "the table",
-            sounds: "MESS-a",
-            picture:
-              "By pudding, your table is an absolute mess-ah — shells, bones, napkins, the lot.",
-            focusNote:
-              "ME-sa, s not z. 'Una mesa para cuatro' is a table for four.",
-          },
-        ],
-      },
-      {
-        id: "palabras-3",
-        title: "At the market",
-        phrases: [
-          {
-            id: "palabras-3-1",
-            text: "el queso",
-            translation: "the cheese",
-            sounds: "K, so…",
-            picture:
-              "The cheese man begins every sentence with 'K, so…' and cuts you another slice each time.",
-            focusNote:
-              "KE-so. 'qu' is a plain k and the u is silent — never 'kwe'.",
           },
           {
             id: "palabras-3-2",
@@ -859,15 +781,41 @@ export const COURSE = [
             focusNote:
               "ha-MON, and that j is the throat-clearing one — like the ch in Scottish 'loch'. Stress the MON.",
           },
+        ],
+      },
+      {
+        id: "palabras-2",
+        title: "The trip",
+        phrases: [
           {
-            id: "palabras-3-3",
-            text: "el pollo",
-            translation: "the chicken",
-            sounds: "POLO, yo",
+            id: "palabras-10-1",
+            text: "el avión",
+            translation: "the plane",
+            sounds: "a BEE ON",
             picture:
-              "A chicken in a polo shirt, playing polo, shouting 'yo!' at the other chickens.",
+              "A bee on the wing of the plane, hanging on grimly the whole way from Gatwick.",
             focusNote:
-              "PO-yo. 'll' as y — and this one matters: 'polo' with an l is a polo shirt, not supper.",
+              "a-BYON — the v is a b, and 'ió' is one syllable. Stress at the end, where the accent is.",
+          },
+          {
+            id: "palabras-10-2",
+            text: "la maleta",
+            translation: "the suitcase",
+            sounds: "MALLET-a",
+            picture:
+              "You shut the suitcase with a mallet, and the presents inside make a noise you decide to ignore.",
+            focusNote:
+              "ma-LE-ta, three syllables, stress in the middle.",
+          },
+          {
+            id: "palabras-4-1",
+            text: "el regalo",
+            translation: "the present",
+            sounds: "REGAL",
+            picture:
+              "A present so regal — gold paper, velvet ribbon — that nobody dares open it, and it sits there all fortnight.",
+            focusNote:
+              "re-GA-lo, tapped r at the start, stress on GA.",
           },
           {
             id: "palabras-3-4",
@@ -880,131 +828,19 @@ export const COURSE = [
               "BOL-sa. Short pure o — no English 'boh-oo' slide. They will ask if you want one.",
           },
           {
-            id: "palabras-3-5",
-            text: "el dinero",
-            translation: "the money",
-            sounds: "De Niro",
+            id: "palabras-10-4",
+            text: "el paseo",
+            translation: "the stroll",
+            sounds: "PASS 'ay-oh'",
             picture:
-              "Robert De Niro at the fish stall, paying for everyone's shopping in cash, note by note.",
+              "On the evening stroll you pass every single person you know, and say 'ay-oh' to each one of them.",
             focusNote:
-              "di-NE-ro, stress on NE. Soft d to start, tapped r in the middle.",
+              "pa-SE-o, three syllables, stress on SE. The evening stroll is a real institution — join in.",
           },
         ],
       },
       {
-        id: "palabras-4",
-        title: "Christmas words",
-        phrases: [
-          {
-            id: "palabras-4-1",
-            text: "el regalo",
-            translation: "the present",
-            sounds: "REGAL",
-            picture:
-              "A present so regal — gold paper, velvet ribbon — that nobody dares open it, and it sits there all fortnight.",
-            focusNote:
-              "re-GA-lo, tapped r at the start, stress on GA.",
-          },
-          {
-            id: "palabras-4-2",
-            text: "el árbol",
-            translation: "the tree",
-            sounds: "ARBOUR",
-            picture:
-              "An arbour of Christmas trees, all leaning inwards, shedding needles on everyone underneath.",
-            focusNote:
-              "AR-bol — stress the first syllable, which is what the accent is telling you.",
-          },
-          {
-            id: "palabras-4-3",
-            text: "la nieve",
-            translation: "the snow",
-            sounds: "KNEE-Everest",
-            picture:
-              "Snow up to your knees, and you are somehow halfway up Everest in your good coat.",
-            focusNote:
-              "NYE-be — 'nie' is one syllable, nye, and the v is a b.",
-          },
-          {
-            id: "palabras-4-4",
-            text: "la cena",
-            translation: "the dinner",
-            sounds: "THANKS-a",
-            picture:
-              "Christmas dinner where everyone says thanks with a lisp — 'THAY-na' — before anyone may start.",
-            focusNote:
-              "THE-na — the Spain c before e, tongue between the teeth. In Latin America it would be 'SE-na'.",
-          },
-          {
-            id: "palabras-4-5",
-            text: "el brindis",
-            translation: "the toast (raising a glass)",
-            sounds: "BRING THIS",
-            picture:
-              "Everyone stands, raises a glass and shouts 'bring this!' — and another bottle of cava arrives.",
-            focusNote:
-              "BRIN-dis, tapped r. 'Un brindis' is the toast itself; '¡Salud!' is what you actually say.",
-          },
-        ],
-      },
-      {
-        id: "palabras-5",
-        title: "Small words that do a lot",
-        phrases: [
-          {
-            id: "palabras-5-1",
-            text: "siempre",
-            translation: "always",
-            sounds: "SEE 'EM PRAY",
-            picture:
-              "Every time you pass that little church, you see 'em pray. Every time, without fail.",
-            focusNote:
-              "SYEM-pre — 'sie' is one syllable, syem. Tapped r at the end.",
-          },
-          {
-            id: "palabras-5-2",
-            text: "nunca",
-            translation: "never",
-            sounds: "NOON car",
-            picture:
-              "The station clock crawls towards noon and stops a minute short. Noon never comes, and nor does the car.",
-            focusNote:
-              "NUN-ka. Pure u, said 'oo'. Stress the first syllable.",
-          },
-          {
-            id: "palabras-5-3",
-            text: "ahora",
-            translation: "now",
-            sounds: "an HOUR",
-            picture:
-              "You ask when, they say 'an hour', and you shout back that you meant NOW. It sounds like 'an hour' and means the opposite.",
-            focusNote:
-              "a-O-ra. The h is silent, so it is three vowels and a tapped r — ah-OH-ra.",
-          },
-          {
-            id: "palabras-5-4",
-            text: "luego",
-            translation: "later",
-            sounds: "LEGO",
-            picture:
-              "Two Lego people wave from the doorway: 'we go… later.' You stand on a brick anyway.",
-            focusNote:
-              "LWE-go — 'lue' is one syllable, lwe. You already say it in '¡Hasta luego!'",
-          },
-          {
-            id: "palabras-5-5",
-            text: "todavía",
-            translation: "still, not yet",
-            sounds: "TOAD a VIA",
-            picture:
-              "A toad sitting in the middle of the road, still there an hour later, refusing to move: 'toad-a-VIA!'",
-            focusNote:
-              "to-da-VEE-a, stress on VEE. Soft d in the middle, and the í is a pure ee.",
-          },
-        ],
-      },
-      {
-        id: "palabras-6",
+        id: "palabras-3",
         title: "Words you need every hour",
         phrases: [
           {
@@ -1028,16 +864,6 @@ export const COURSE = [
               "ke-RER — 'qu' is a plain k, the u is silent, and both r's are single taps. 'Quiero' is I want.",
           },
           {
-            id: "palabras-6-3",
-            text: "poder",
-            translation: "to be able to, can",
-            sounds: "POWDER",
-            picture:
-              "One sniff of the powder and you can do anything — all the shopping home in one trip, no stops.",
-            focusNote:
-              "po-DER, stress on DER, and the d is soft. 'Puedo' is I can — the o breaks into 'we'.",
-          },
-          {
             id: "palabras-6-4",
             text: "ir",
             translation: "to go",
@@ -1057,10 +883,20 @@ export const COURSE = [
             focusNote:
               "sa-BER, tapped r. 'Sé' is I know — one syllable, and nothing like the infinitive.",
           },
+          {
+            id: "palabras-5-3",
+            text: "ahora",
+            translation: "now",
+            sounds: "an HOUR",
+            picture:
+              "You ask when, they say 'an hour', and you shout back that you meant NOW. It sounds like 'an hour' and means the opposite.",
+            focusNote:
+              "a-O-ra. The h is silent, so it is three vowels and a tapped r — ah-OH-ra.",
+          },
         ],
       },
       {
-        id: "palabras-7",
+        id: "palabras-4",
         title: "Asking questions",
         phrases: [
           {
@@ -1116,8 +952,8 @@ export const COURSE = [
         ],
       },
       {
-        id: "palabras-8",
-        title: "Today, tomorrow, yesterday",
+        id: "palabras-5",
+        title: "When, and how often",
         phrases: [
           {
             id: "palabras-8-1",
@@ -1130,16 +966,6 @@ export const COURSE = [
               "One syllable, 'oy'. The h is silent, the way it always is.",
           },
           {
-            id: "palabras-8-2",
-            text: "mañana",
-            translation: "tomorrow, morning",
-            sounds: "a man says 'ya, ya, na'",
-            picture:
-              "A man waves you away — 'ya, ya, na' — he'll see to it tomorrow. He said that yesterday as well.",
-            focusNote:
-              "ma-NYA-na. The ñ is 'ny' as in canyon. It means the morning as well as tomorrow, which is very Spanish of it.",
-          },
-          {
             id: "palabras-8-3",
             text: "ayer",
             translation: "yesterday",
@@ -1148,16 +974,6 @@ export const COURSE = [
               "Yesterday feels like a whole year ago, because you spent every hour of it in the air getting here.",
             focusNote:
               "a-YER, stress at the end. Two syllables and a tapped r.",
-          },
-          {
-            id: "palabras-8-4",
-            text: "la semana",
-            translation: "the week",
-            sounds: "some MANNA",
-            picture:
-              "Manna falls out of the sky once a week, and you have to catch a whole week's worth in a tea towel.",
-            focusNote:
-              "se-MA-na, stress in the middle. 'Fin de semana' is the weekend.",
           },
           {
             id: "palabras-8-5",
@@ -1169,31 +985,41 @@ export const COURSE = [
             focusNote:
               "TAR-de, soft d. Same word does late and afternoon — 'buenas tardes' is the one you know.",
           },
+          {
+            id: "palabras-5-1",
+            text: "siempre",
+            translation: "always",
+            sounds: "SEE 'EM PRAY",
+            picture:
+              "Every time you pass that little church, you see 'em pray. Every time, without fail.",
+            focusNote:
+              "SYEM-pre — 'sie' is one syllable, syem. Tapped r at the end.",
+          },
+          {
+            id: "palabras-5-2",
+            text: "nunca",
+            translation: "never",
+            sounds: "NOON car",
+            picture:
+              "The station clock crawls towards noon and stops a minute short. Noon never comes, and nor does the car.",
+            focusNote:
+              "NUN-ka. Pure u, said 'oo'. Stress the first syllable.",
+          },
         ],
       },
       {
-        id: "palabras-9",
-        title: "When something hurts",
+        id: "palabras-6",
+        title: "Odds and ends",
         phrases: [
           {
-            id: "palabras-9-1",
-            text: "la farmacia",
-            translation: "the chemist's",
-            sounds: "FARM-acia",
+            id: "palabras-3-5",
+            text: "el dinero",
+            translation: "the money",
+            sounds: "De Niro",
             picture:
-              "The chemist's is a farm — a flashing green cross over the barn door and a cow at the counter in a white coat.",
+              "Robert De Niro at the fish stall, paying for everyone's shopping in cash, note by note.",
             focusNote:
-              "far-MA-thya — that's the Spain c. Look for the flashing green cross; every one of them has one.",
-          },
-          {
-            id: "palabras-9-2",
-            text: "la cabeza",
-            translation: "the head",
-            sounds: "CAB, BEIGE-a",
-            picture:
-              "You bang your head on the roof of a beige taxi, twice, because you forgot the first time.",
-            focusNote:
-              "ca-BE-tha — the z is the Spain 'th', tongue between the teeth. Stress the middle.",
+              "di-NE-ro, stress on NE. Soft d to start, tapped r in the middle.",
           },
           {
             id: "palabras-9-3",
@@ -1206,16 +1032,6 @@ export const COURSE = [
               "do-LOR, stress at the end. English 'dolorous' is the same word wearing a coat.",
           },
           {
-            id: "palabras-9-4",
-            text: "cansado",
-            translation: "tired",
-            sounds: "CAN'T SAY DOUGH",
-            picture:
-              "You are so tired you can't say your own name. 'Can… sa… dough…' and you're asleep in the chair.",
-            focusNote:
-              "can-SA-do, soft d. You would say 'cansada' — the ending agrees with you, not with the tiredness.",
-          },
-          {
             id: "palabras-9-5",
             text: "la receta",
             translation: "the prescription",
@@ -1225,61 +1041,15 @@ export const COURSE = [
             focusNote:
               "re-THE-ta — the Spain c again. It really does mean recipe too, which is why the picture works.",
           },
-        ],
-      },
-      {
-        id: "palabras-10",
-        title: "Getting there",
-        phrases: [
           {
-            id: "palabras-10-1",
-            text: "el avión",
-            translation: "the plane",
-            sounds: "a BEE ON",
+            id: "palabras-5-5",
+            text: "todavía",
+            translation: "still, not yet",
+            sounds: "TOAD a VIA",
             picture:
-              "A bee on the wing of the plane, hanging on grimly the whole way from Gatwick.",
+              "A toad sitting in the middle of the road, still there an hour later, refusing to move: 'toad-a-VIA!'",
             focusNote:
-              "a-BYON — the v is a b, and 'ió' is one syllable. Stress at the end, where the accent is.",
-          },
-          {
-            id: "palabras-10-2",
-            text: "la maleta",
-            translation: "the suitcase",
-            sounds: "MALLET-a",
-            picture:
-              "You shut the suitcase with a mallet, and the presents inside make a noise you decide to ignore.",
-            focusNote:
-              "ma-LE-ta, three syllables, stress in the middle.",
-          },
-          {
-            id: "palabras-10-3",
-            text: "el billete",
-            translation: "the ticket",
-            sounds: "BILLY eats",
-            picture:
-              "A goat called Billy eats your ticket at the barrier, slowly, while the queue watches.",
-            focusNote:
-              "bi-YE-te — 'll' is a y, so never 'billet'. It's the banknote word too.",
-          },
-          {
-            id: "palabras-10-4",
-            text: "el paseo",
-            translation: "the stroll",
-            sounds: "PASS 'ay-oh'",
-            picture:
-              "On the evening stroll you pass every single person you know, and say 'ay-oh' to each one of them.",
-            focusNote:
-              "pa-SE-o, three syllables, stress on SE. The evening stroll is a real institution — join in.",
-          },
-          {
-            id: "palabras-10-5",
-            text: "la playa",
-            translation: "the beach",
-            sounds: "PLAYER",
-            picture:
-              "An old CD player half-buried in the sand, still playing, and nobody will admit whose it is.",
-            focusNote:
-              "PLA-ya — 'ay' is one sound and the y is a y. Two syllables, stress the first.",
+              "to-da-VEE-a, stress on VEE. Soft d in the middle, and the í is a pure ee.",
           },
         ],
       },

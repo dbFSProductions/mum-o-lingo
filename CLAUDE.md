@@ -491,7 +491,7 @@ deck list, this has a path) and the Spanish name.
 
 ## A word, a sound and one ridiculous picture
 
-The **Palabras** unit (ten lessons, five words each, purple) is vocabulary by
+The **Palabras** unit (six lessons, twenty-nine words, purple) is vocabulary by
 the keyword method: you hear an English sound inside the Spanish word, and you
 build one absurd scene out of that sound and the meaning. `tenedor` sounds like
 "ten-a-door", so a ten-pound note is pinned to the front door and the nail is a fork. It is
@@ -766,7 +766,7 @@ cd docs && python3 -m http.server 8765   # http://127.0.0.1:8765
 ```
 
 Playwright against that URL beats clicking through. Worth asserting: no
-console errors on boot, the path shows 25 course nodes + Repaso with **nothing
+console errors on boot, the path shows 21 course nodes + Repaso with **nothing
 locked** (`.node.locked` should never match), the deepest lesson opens straight
 away with `.drill-text` populated, an edit to a course phrase drills as edited
 and Reset puts it back, a starred phrase raises the Favourites node, a saved
