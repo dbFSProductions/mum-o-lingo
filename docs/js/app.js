@@ -51,6 +51,11 @@ const state = {
   // the answer is on screen (always true at level one); `peeked` says she
   // asked to be shown it rather than remembering.
   recall: false,
+
+  /* The keyword picture, on a card that has one. Per card — loadPhrase resets
+     it — and only ever true because she asked for it: at level two the picture
+     is the hint, offered instead of the answer. */
+  pictured: false,
   revealed: true,
   peeked: false,
   loadingModel: false,
@@ -256,6 +261,25 @@ async function fetchReplies(phrase) {
      shape. */
   phrase.replies = replies;
   return replies;
+}
+
+/* The keyword picture: what the word sounds like in English, and the absurd
+   scene built out of that sound and the meaning. See the Palabras unit in
+   content.js for what makes one work and what makes one useless.
+
+   `picture` is what there is to show — a bridge with no scene hanging off it
+   is a riddle with the answer torn off, so `sounds` alone prints nothing. Any
+   card can carry the pair, not only a Palabras word: the fields are editable,
+   so a picture can be hung on any word Mum keeps losing. */
+function pictureBlock(phrase, style = "") {
+  if (!phrase?.picture?.trim()) return "";
+  const sounds = phrase.sounds?.trim();
+  return `
+    <div class="picture-note"${style ? ` style="${style}"` : ""}>
+      <strong>Picture it</strong>
+      ${sounds ? `<span class="picture-sounds">Sounds like &ldquo;${esc(sounds)}&rdquo;</span>` : ""}
+      <span>${esc(phrase.picture)}</span>
+    </div>`;
 }
 
 /* Answers kept from a chat, printed back under the card they were kept on.
@@ -998,6 +1022,7 @@ async function loadPhrase() {
   state.recall = Boolean(settings.recallMode && phrase && library.recallReady(phrase.id));
   state.revealed = !state.recall;
   state.peeked = false;
+  state.pictured = false;
   scoring.lastError = null;
   window.scrollTo(0, 0);
   if (!phrase) return render();
@@ -1080,6 +1105,8 @@ function renderDrill() {
       }
     </div>
 
+    ${drillPicture(phrase, asking)}
+
     ${
       asking
         ? `<button class="btn btn-big" id="show-me" style="margin-top:0">👀 Show me</button>`
@@ -1151,6 +1178,13 @@ function renderDrill() {
   document.getElementById("listen")?.addEventListener("click", () => playModel(1));
   document.getElementById("slow")?.addEventListener("click", () => playModel(settings.slowRate));
   document.getElementById("record").onclick = toggleRecording;
+  /* The picture, asked for rather than shown. Re-rendering is safe here for
+     the same reason it is safe on a gate: while the question is standing there
+     is no attempt on the screen for a render() to throw away. */
+  document.getElementById("picture-hint")?.addEventListener("click", () => {
+    state.pictured = true;
+    render();
+  });
   document.getElementById("show-me")?.addEventListener("click", () => {
     state.revealed = true;
     state.peeked = true;
@@ -1233,6 +1267,28 @@ function renderDrill() {
   drawCanvases();
 
   window.scrollTo(0, scrollY);
+}
+
+/* The picture, and which side of the level-two line it falls on — which is
+   neither of the sides everything else in the drill takes.
+
+   At level one it is reference material like the tip, so it waits behind the
+   meaning: the scene names the English, and hiding the translation and then
+   printing "a fork nailed to a door" would be pointless.
+
+   At level two it is the whole point of the unit. The Spanish is being
+   withheld and the picture is the road back to it, so it is offered as a
+   button rather than shown — and reaching for it is NOT peeking. Show me hands
+   over the answer; the picture makes her produce it, which is the method
+   working exactly as intended. So it leaves `peeked` alone, and once she has
+   asked, it stays on the card for the rest of the go. */
+function drillPicture(phrase, asking) {
+  if (!phrase.picture?.trim()) return "";
+  if (asking && !state.pictured) {
+    return `<button class="btn btn-picture" id="picture-hint" style="width:100%;margin-bottom:12px">🧠 Show me the picture</button>`;
+  }
+  if (!asking && !state.showTranslation && !state.pictured) return "";
+  return `<div class="card picture-card">${pictureBlock(phrase)}</div>`;
 }
 
 /* What she'd hear back, and — for a card that hasn't got any — the offer to go
@@ -1845,7 +1901,11 @@ function renderPhrases() {
       phrase.translation.toLowerCase().includes(query) ||
       (phrase.situation ?? "").toLowerCase().includes(query) ||
       (phrase.usageNote ?? "").toLowerCase().includes(query) ||
-      (phrase.focusNote ?? "").toLowerCase().includes(query);
+      (phrase.focusNote ?? "").toLowerCase().includes(query) ||
+      // Searching "fork" should find el tenedor even though the card says
+      // "the fork" nowhere except inside its picture.
+      (phrase.picture ?? "").toLowerCase().includes(query) ||
+      (phrase.sounds ?? "").toLowerCase().includes(query);
 
     const sections = [];
 
@@ -1969,6 +2029,11 @@ function showPhrase(phrase) {
              } and this one turns into a memory question.`
        }</span>
      </div>
+     ${
+       /* Stated flat, where she is looking a word up rather than being asked
+          for it — so no hint button and no waiting for anything. */
+       pictureBlock(phrase, "margin:12px 0 4px")
+     }
      ${phrase.situation ? `<div class="phrase-context"><strong>Situation</strong><span>${esc(phrase.situation)}</span></div>` : ""}
      ${phrase.usageNote ? `<div class="phrase-context"><strong>How it's used</strong><span>${esc(phrase.usageNote)}</span></div>` : ""}
      ${phrase.focusNote ? `<div class="focus-note" style="margin:12px 0 14px"><strong>Tip</strong><span>${esc(phrase.focusNote)}</span></div>` : ""}
@@ -2128,6 +2193,21 @@ function editPhrase(phrase, onSaved = null) {
        <textarea id="f-usage">${esc(phrase?.usageNote ?? "")}</textarea></label>
      <label class="field"><span>Tip (optional)</span>
        <textarea id="f-note" placeholder="What to listen for">${esc(phrase?.focusNote ?? "")}</textarea></label>
+     <label class="field"><span>Sounds like (optional)</span>
+       <textarea id="f-sounds" placeholder="The English hiding inside it">${esc(phrase?.sounds ?? "")}</textarea></label>
+     <label class="field"><span>Picture it (optional)</span>
+       <textarea id="f-picture" placeholder="One daft scene with the sound AND the meaning in it">${esc(
+         phrase?.picture ?? ""
+       )}</textarea></label>
+     ${
+       settings.hasAssistant
+         ? `<button class="btn" id="f-picture-ai" style="width:100%;margin-bottom:10px">Invent a picture for me</button>`
+         : ""
+     }
+     <div id="f-picture-note" class="notice" hidden></div>
+     <p class="tiny muted" style="margin:0 0 12px">A word sticks when it is hooked to something ridiculous —
+       tenedor is a ten-pound note pinned to a door with a fork. The stranger the better, and one you make up
+       yourself beats one you were handed.</p>
      ${
        settings.hasAssistant
          ? `<button class="btn" id="f-ai" style="width:100%;margin-bottom:10px">Rebuild the rest with AI</button>
@@ -2156,6 +2236,7 @@ function editPhrase(phrase, onSaved = null) {
 
   autosizeAll(sheetBody);
   const editorAI = wireEditorAI(phrase);
+  wirePictureAI();
 
   document.getElementById("f-save").onclick = () => {
     const text = document.getElementById("f-text").value.trim();
@@ -2170,6 +2251,8 @@ function editPhrase(phrase, onSaved = null) {
       situation: document.getElementById("f-situation").value.trim() || null,
       usageNote: document.getElementById("f-usage").value.trim() || null,
       focusNote: document.getElementById("f-note").value.trim() || null,
+      sounds: document.getElementById("f-sounds").value.trim() || null,
+      picture: document.getElementById("f-picture").value.trim() || null,
     };
     if (phrase) {
       library.updatePhrase({ ...phrase, ...data });
@@ -2197,6 +2280,90 @@ function editPhrase(phrase, onSaved = null) {
   armDelete(document.getElementById("f-delete"), "Tap again to delete for good", () =>
     deletePhrase(phrase)
   );
+}
+
+/* "Invent a picture for me" — the one call in the app that asks for something
+   the Worker was never taught about, and gets it through /chat rather than
+   through an endpoint of its own. That is the whole reason it is a chat
+   question: the Worker lives in Xerra's repo and serves all of these apps, so
+   a feature that needs a new endpoint needs a deploy over there first. This
+   one needs nothing: it is one turn of the same conversation the card chat
+   panel already has, with the question written for her instead of by her.
+
+   The answer is asked for in two labelled lines and parsed back into the two
+   boxes, but a model that ignores the format costs only the split — the whole
+   reply lands in Picture and she can cut it about. Nothing is saved until Save,
+   as everywhere else in this editor. */
+const PICTURE_REQUEST = `Invent a keyword mnemonic for this card, for a beginner who speaks British English.
+
+Find English words or sounds hiding inside the Spanish, then build ONE absurd, vivid scene that contains both that sound and the English meaning, so that remembering the scene hands the word back. Strange, rude or violent is better than sensible. Never bridge to a sound the Spanish does not actually have — a picture that teaches the wrong pronunciation is worse than none.
+
+Answer in exactly two lines, with nothing before or after them:
+SOUNDS LIKE: <the English sound bridge, a few words>
+PICTURE: <one sentence>`;
+
+function parsePicture(reply) {
+  const text = String(reply ?? "").trim();
+  const sounds = text.match(/sounds\s*like\s*:\s*(.+)/i)?.[1]?.trim() ?? "";
+  const picture = text.match(/picture\s*:\s*([\s\S]+)/i)?.[1]?.trim() || text;
+  return { sounds: sounds.replace(/^["\u201c\u2018']+|["\u201d\u2019']+$/g, ""), picture };
+}
+
+function wirePictureAI() {
+  const button = document.getElementById("f-picture-ai");
+  if (!button) return;
+  const noteBox = document.getElementById("f-picture-note");
+
+  button.onclick = async () => {
+    const text = document.getElementById("f-text").value.trim();
+    const translation = document.getElementById("f-translation").value.trim();
+    // Both sides, and not for tidiness: the scene has to contain the sound of
+    // the Spanish and the English meaning, so half a card can't produce one.
+    if (!text || !translation) {
+      toast("Fill in the Spanish and the English first — a picture needs both.");
+      return;
+    }
+
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner"></span> Thinking\u2026`;
+    noteBox.hidden = true;
+    try {
+      const { reply } = await cardAssistant.chat(
+        {
+          ...chatContext({
+            text,
+            translation,
+            situation: document.getElementById("f-situation").value.trim(),
+            usageNote: document.getElementById("f-usage").value.trim(),
+            focusNote: document.getElementById("f-note").value.trim(),
+            replies: [],
+          }),
+          history: [{ role: "user", text: PICTURE_REQUEST }],
+        },
+        settings
+      );
+      const made = parsePicture(reply);
+      if (!made.picture) throw new Error("Nothing came back. Try again.");
+      const soundsField = document.getElementById("f-sounds");
+      const pictureField = document.getElementById("f-picture");
+      // The sheet can be gone by now — she tapped Cancel while it thought.
+      if (!pictureField) return;
+      if (made.sounds) soundsField.value = made.sounds;
+      pictureField.value = made.picture;
+      autosize(soundsField);
+      autosize(pictureField);
+      noteBox.className = "notice";
+      noteBox.textContent = "Have a look — change anything that isn't yours, and it only counts once you Save.";
+      noteBox.hidden = false;
+    } catch (error) {
+      noteBox.className = "notice bad";
+      noteBox.textContent = error.message;
+      noteBox.hidden = false;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Invent a picture for me";
+    }
+  };
 }
 
 /* "Rebuild the rest with AI" — the same /complete-card call the Add tab makes,

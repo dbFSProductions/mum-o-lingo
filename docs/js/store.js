@@ -30,7 +30,21 @@ const KEYS = {
 // stored as an override keyed by phrase id rather than as a copy — content.js
 // stays the source of truth, and a later course revision still reaches every
 // phrase Mum hasn't personally changed.
-const EDITABLE = ["text", "translation", "focusNote", "situation", "usageNote"];
+const EDITABLE = [
+  "text",
+  "translation",
+  "focusNote",
+  "situation",
+  "usageNote",
+  /* The keyword-picture pair — see the Palabras unit in content.js. They are
+     editable like anything else on a card, and deliberately so: a picture you
+     invented yourself outlasts one you were handed, so the course's version is
+     a starting point and "Reset to the original" is the way back from a worse
+     one. Any card can carry them, not just a Palabras word — Mum can hang a
+     picture on a word inside a phrase she keeps losing. */
+  "sounds",
+  "picture",
+];
 
 /* Cards the assistant writes about Mum's own life, from an English interview.
    They are ordinary cards of hers in every way — they drill, star, score,
@@ -353,6 +367,8 @@ export const library = {
       situation: null,
       usageNote: null,
       focusNote: null,
+      sounds: null,
+      picture: null,
       ...phrase,
     };
     this.customPhrases.push(saved);
