@@ -62,6 +62,12 @@ A few things worth knowing:
   When one of them goes up to level 2 there's a **Show me the picture** button
   sitting above **Show me** — reach for the picture first. Remembering it *is*
   the trick working; being handed the answer isn't.
+- **And it can draw them.** Under the picture on any word there's **Draw this
+  for me** — Gemini makes an actual picture of the scene, and it stays on the
+  card afterwards, offline, until you remove it. It only ever draws when you
+  ask: picturing it in your own head is what makes the word stick, and the
+  drawing is there for the ones that won't come. On the phrase sheet you can
+  ask for another go at it, or throw it away.
 - **Hang a picture on any word you keep losing.** It doesn't have to be one of
   those twenty-nine. Open any card, tap **Edit**, and at the bottom there are
   two boxes: *Sounds like* and *Picture it*. One you make up yourself will beat

@@ -537,6 +537,39 @@ unit here that teaches single words rather than things you say.
   ignores the format costs only the split, since the whole reply lands in
   Picture. **Don't "improve" this into a `/complete-card` field or an endpoint
   of its own** without reading what replies did to the Add tab.
+- **Gemini will draw the scene, and only when asked.** `/picture` on the
+  Worker turns the `picture` sentence into an image; the drawing is kept in
+  IndexedDB by phrase id and shown inside the same block, behind the same
+  gates, as the text. It is never fetched on its own initiative, and that is
+  the pedagogy rather than the bill: imagining the scene yourself is the
+  technique working, and a picture handed over unasked removes the effort that
+  makes it stick. The sentence stays the mnemonic; the drawing is for when the
+  scene will not come.
+- **The drawing is its own endpoint, its own model and its own failure.** An
+  image is the biggest, slowest thing the Worker produces, so it earns an
+  endpoint for the reason replies did — see what putting them on
+  `/complete-card` cost. It runs `GEMINI_IMAGE_MODEL` alone (nothing else in
+  the chain can draw, and a model that cannot draw cannot half-draw), sends no
+  `generation_config` (an image model has no `thinking_level` and rejects the
+  field), and gets 40s rather than the 25s sized for a card. **This one did
+  need a Worker change**, unlike everything else in this unit — the Worker
+  lives in Xerra's repo and `worker/**` is on a deploy trigger, so merging it
+  there ships it for all three apps at once.
+- **Third IndexedDB store, so `DB_VERSION` went to 2.** The upgrade handler
+  creates whatever is missing, so an existing install keeps its recordings and
+  cached audio and gains the box. Drawings are not in the export, for the same
+  reason recordings aren't: blobs stay on the device, and a restored backup
+  offers to draw them again.
+- **What comes back is shrunk before it is kept** — 512px, WebP where the
+  browser will encode it. A full-size render per word would outweigh the rest
+  of the app on a phone whose storage iOS is willing to evict.
+- **`outputImageOf` on the Worker reads the response forgivingly, and that is
+  not sloppiness.** There is no Gemini key in any of these repos and no image
+  fixture to replay, so the image path could not be exercised before it was
+  deployed; it accepts the bytes from `output_image` or from a `model_output`
+  step, under either spelling of the field names. If Google moves them, that
+  function is the fix and *"the model drew nothing"* on the phone is what
+  points at it.
 - **It sits in the editor, not on the sheet.** One implementation, reachable
   from the phrase sheet's Edit and from the lesson's EDIT alike, and it lands
   where the result can be rewritten — which matters, because a picture
@@ -818,6 +851,18 @@ scene, and Reset empties the store. With `/chat` stubbed: the two labelled
 lines land in `#f-sounds` and `#f-picture`, an unlabelled reply lands whole in
 `#f-picture`, half a card refuses with a toast, a 503 is reported in
 `#f-picture-note` with the boxes untouched, and Cancel writes nothing.
+
+With `/picture` stubbed: no draw button at all with no assistant configured;
+`.picture-draw` is offered on a card with a scene and nothing is fetched until
+it is pressed; one press paints `.picture-image` from a blob URL; a reload
+shows it again with no second call; the blob in the `pictures` store is an
+image and smaller than what was sent; the sheet's `[data-undraw]` takes it out
+of storage and puts the offer back; and a 503 lands in `.picture-art-error`
+with the offer still there. The Worker half has a test of its own that drives
+`worker.fetch` with `globalThis.fetch` stubbed — it covers the three response
+shapes `outputImageOf` accepts, that the request carries no `generation_config`
+and names the image model, and that `/chat` still thinks at low and still
+leads with the fast model.
 
 For the weakest-word score, `attemptScore` is worth driving straight at the
 module: five words with a 61 among them returns 61 and not Azure's 93, an

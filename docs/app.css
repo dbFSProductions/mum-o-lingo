@@ -558,6 +558,28 @@ button { font: inherit; }
    drill's rhythm, so it keeps its border and gives up its padding. */
 .picture-card { padding: 8px; }
 
+/* The drawing, when there is one. Held to the width of the block it sits in
+   and given the tint's own rounding, so it reads as part of the picture rather
+   than as an attachment to it. */
+.picture-art:not(:empty) { margin-top: 10px; }
+/* Capped, and never cropped. A square drawing at the full width of the block
+   is 300px tall on a 390px phone, which pushes Listen and the record button
+   off the bottom of the card — the picture is a hook, not the lesson. `contain`
+   rather than `cover` because a mnemonic with its corner cut off may have lost
+   the half that carries the sound. */
+.picture-image {
+  display: block;
+  width: 100%;
+  max-height: 210px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.picture-art-row { display: flex; gap: 14px; margin-top: 6px; }
+.picture-art-row .link { padding: 0; font-size: 0.78rem; }
+.picture-draw { width: 100%; }
+.picture-drawing { margin: 0; }
+
 /* The hint button at level two, tinted rather than plain — because the two
    buttons it stands next to are not equals. Reaching for the picture is the
    method working; Show me hands over the answer. So the picture is the one

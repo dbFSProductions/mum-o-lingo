@@ -279,7 +279,139 @@ function pictureBlock(phrase, style = "") {
       <strong>Picture it</strong>
       ${sounds ? `<span class="picture-sounds">Sounds like &ldquo;${esc(sounds)}&rdquo;</span>` : ""}
       <span>${esc(phrase.picture)}</span>
+      <div class="picture-art" data-art="${esc(phrase.id)}"></div>
     </div>`;
+}
+
+/* The drawing of the scene, if there is one — and the offer to have Gemini make
+   one, if there isn't.
+
+   Filled in after the fact rather than in `pictureBlock`, because the image
+   lives in IndexedDB and reading it is async while every render here is a
+   string. So the block leaves an empty slot and this fills it, which also means
+   the picture text is on the screen at full speed whether or not there is a
+   drawing behind it.
+
+   It is never fetched on its own initiative. The sentence is the mnemonic and
+   imagining it yourself is the technique working; the drawing is there for when
+   the scene won't come, and it costs a call, so it waits to be asked for. Once
+   made it is kept, so a word is drawn once and is then available offline like
+   the model audio is.
+
+   `controls` is the phrase sheet: the one place that can throw a drawing away
+   and ask for another. The lesson shows what there is and keeps out of the way.
+
+   Blob URLs are held in a module-level map rather than made per render — the
+   drill re-renders on every reveal and every score, and a fresh object URL each
+   time would leak one per repaint. */
+const pictureURLs = new Map();
+
+function releasePicture(id) {
+  const url = pictureURLs.get(id);
+  if (url) URL.revokeObjectURL(url);
+  pictureURLs.delete(id);
+}
+
+async function wirePictureArt(root, phrase, { controls = false } = {}) {
+  const slot = root?.querySelector?.(`[data-art="${CSS.escape(phrase.id)}"]`);
+  if (!slot) return;
+
+  const paint = (blob) => {
+    if (!slot.isConnected) return;
+    if (!pictureURLs.has(phrase.id)) pictureURLs.set(phrase.id, URL.createObjectURL(blob));
+    slot.innerHTML = `<img class="picture-image" alt="${esc(phrase.picture)}" src="${pictureURLs.get(phrase.id)}">${
+      controls
+        ? `<div class="picture-art-row">
+             <button class="link" data-redraw>Draw it again</button>
+             <button class="link btn-danger" data-undraw>Remove the drawing</button>
+           </div>`
+        : ""
+    }`;
+    slot.querySelector("[data-redraw]")?.addEventListener("click", () => draw());
+    slot.querySelector("[data-undraw]")?.addEventListener("click", async () => {
+      await audioStore.deletePicture(phrase.id);
+      releasePicture(phrase.id);
+      offer();
+    });
+  };
+
+  const offer = () => {
+    if (!slot.isConnected) return;
+    slot.innerHTML = settings.hasAssistant
+      ? `<button class="btn btn-picture picture-draw">\u{1f3a8} Draw this for me</button>
+         <div class="notice bad picture-art-error" hidden></div>`
+      : "";
+    slot.querySelector(".picture-draw")?.addEventListener("click", () => draw());
+  };
+
+  async function draw() {
+    const button = slot.querySelector(".picture-draw");
+    slot.innerHTML = `<p class="small muted picture-drawing"><span class="spinner"></span> Drawing it\u2026 this one takes a while.</p>`;
+    try {
+      const { image } = await cardAssistant.picture(
+        {
+          languageCode: COURSE_LANGUAGE,
+          languageName: "Spanish (Spain)",
+          card: {
+            text: phrase.text,
+            translation: phrase.translation,
+            sounds: phrase.sounds ?? "",
+            picture: phrase.picture ?? "",
+          },
+        },
+        settings
+      );
+      if (!image?.data) throw new Error("Nothing came back to draw.");
+      /* Shrunk before it is kept. What comes back is a full-size render, and
+         this is a thumbnail on a phone whose storage iOS is willing to evict —
+         a couple of hundred kilobytes per word would add up to more than the
+         rest of the app put together. */
+      const blob = await shrinkImage(base64ToBlob(image.data, image.mimeType || "image/png"));
+      await audioStore.putPicture(phrase.id, blob);
+      releasePicture(phrase.id);
+      paint(blob);
+    } catch (error) {
+      if (!slot.isConnected) return;
+      offer();
+      const box = slot.querySelector(".picture-art-error");
+      if (box) {
+        box.textContent = error.message;
+        box.hidden = false;
+      } else toast(error.message);
+      if (button) button.disabled = false;
+    }
+  }
+
+  const existing = await audioStore.getPicture(phrase.id);
+  if (existing) paint(existing);
+  else offer();
+}
+
+function base64ToBlob(data, mimeType) {
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mimeType });
+}
+
+/* Down to a card-sized thumbnail before it is stored. WebP where the browser
+   will encode it and whatever it falls back to where it won't — Safari quietly
+   returns PNG, which is bigger but still a fraction of what arrived. If the
+   canvas refuses entirely, the original is kept rather than nothing. */
+async function shrinkImage(blob, max = 512) {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+    const shrunk = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+    return shrunk ?? blob;
+  } catch {
+    return blob;
+  }
 }
 
 /* Answers kept from a chat, printed back under the card they were kept on.
@@ -1209,6 +1341,8 @@ function renderDrill() {
     advance({ skipped: false, score: state.attempt ? attemptScore(state.attempt) : null });
   });
 
+  wirePictureArt(view, phrase);
+
   wireReplies(view.querySelector(".drill-replies"), phrase.replies ?? []);
 
   /* Fetching them mid-lesson. The card is repainted in place rather than
@@ -2129,6 +2263,8 @@ function showPhrase(phrase) {
     );
   }
   paintNotes();
+
+  wirePictureArt(sheetBody, phrase, { controls: true });
 
   wireReplies(document.getElementById("p-replies"), phrase.replies ?? []);
 
