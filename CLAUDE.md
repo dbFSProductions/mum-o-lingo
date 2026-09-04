@@ -537,7 +537,7 @@ unit here that teaches single words rather than things you say.
   ignores the format costs only the split, since the whole reply lands in
   Picture. **Don't "improve" this into a `/complete-card` field or an endpoint
   of its own** without reading what replies did to the Add tab.
-- **Gemini will draw the scene, and only when asked.** `/picture` on the
+- **The scene gets drawn, and only when asked.** `/picture` on the
   Worker turns the `picture` sentence into an image; the drawing is kept in
   IndexedDB by phrase id and shown inside the same block, behind the same
   gates, as the text. It is never fetched on its own initiative, and that is
@@ -548,13 +548,32 @@ unit here that teaches single words rather than things you say.
 - **The drawing is its own endpoint, its own model and its own failure.** An
   image is the biggest, slowest thing the Worker produces, so it earns an
   endpoint for the reason replies did — see what putting them on
-  `/complete-card` cost. It runs `GEMINI_IMAGE_MODEL` alone (nothing else in
-  the chain can draw, and a model that cannot draw cannot half-draw), sends no
-  `generation_config` (an image model has no `thinking_level` and rejects the
-  field), and gets 40s rather than the 25s sized for a card. **This one did
-  need a Worker change**, unlike everything else in this unit — the Worker
-  lives in Xerra's repo and `worker/**` is on a deploy trigger, so merging it
-  there ships it for all three apps at once.
+  `/complete-card` cost. It gets 40s rather than the 25s sized for a card.
+  **This one did need a Worker change**, unlike everything else in this unit —
+  the Worker lives in Xerra's repo and `worker/**` is on a deploy trigger, so
+  merging it there ships it for all three apps at once.
+- **It draws through Replicate, on Gemini's own image model.** The first
+  shipped version called Gemini's API directly and had never actually drawn
+  anything — written from the API reference against a response nobody had seen,
+  since there is no Gemini key in any of these repos. The Replicate path was
+  checked end to end on the real Palabras cards before it shipped.
+  Which model was the surprise. Diffusion models don't honour "no lettering"
+  and they draw any word you name them, so flux-schnell captioned *el tenedor*
+  with **"el tenddor"** and ideogram wrote the Spanish out in a speech bubble.
+  A misspelling of the word being taught is worse than no picture — the same
+  argument as *never bridge to a sound the word hasn't got*, one layer down.
+  `google/nano-banana-2` is Gemini's image model reached through Replicate, so
+  it follows the instruction and **`buildPicturePrompt` did not change.** The
+  table in `worker/README.md` is what to re-read before swapping it for
+  something cheaper.
+- **Nothing in this repo changed when the provider did.** Replicate answers
+  with a URL rather than bytes, so the Worker fetches the file and base64s it;
+  what arrives here is still `{ image: { data, mimeType } }`. No client change
+  and **no version bump** — `sw.js` and `js/version.js` are for changed assets,
+  and none changed. Provider is chosen by which credential the Worker holds
+  (`REPLICATE_API_TOKEN`), deliberately not as a fallback chain: an unverified
+  path underneath a verified one turns "the drawing failed" into two possible
+  stories. Unsetting the token is the way back to the Gemini path.
 - **Third IndexedDB store, so `DB_VERSION` went to 2.** The upgrade handler
   creates whatever is missing, so an existing install keeps its recordings and
   cached audio and gains the box. Drawings are not in the export, for the same
@@ -564,12 +583,16 @@ unit here that teaches single words rather than things you say.
   browser will encode it. A full-size render per word would outweigh the rest
   of the app on a phone whose storage iOS is willing to evict.
 - **`outputImageOf` on the Worker reads the response forgivingly, and that is
-  not sloppiness.** There is no Gemini key in any of these repos and no image
-  fixture to replay, so the image path could not be exercised before it was
-  deployed; it accepts the bytes from `output_image` or from a `model_output`
-  step, under either spelling of the field names. If Google moves them, that
-  function is the fix and *"the model drew nothing"* on the phone is what
-  points at it.
+  not sloppiness** — though it is now only on the *fallback* path, and nothing
+  on the Replicate path calls it. There is no Gemini key in any of these repos
+  and no image fixture to replay, so that path could not be exercised before it
+  was deployed; it accepts the bytes from `output_image` or from a
+  `model_output` step, under either spelling of the field names. If Google
+  moves them, that function is the fix and *"the model drew nothing"* on the
+  phone is what points at it.
+- **Two output shapes on the Replicate side, and the difference is invisible
+  until it 500s.** `nano-banana-2` answers with a bare URL string;
+  `flux-schnell` answers with an array of them. The Worker takes either.
 - **It sits in the editor, not on the sheet.** One implementation, reachable
   from the phrase sheet's Edit and from the lesson's EDIT alike, and it lands
   where the result can be rewritten — which matters, because a picture
@@ -858,11 +881,15 @@ it is pressed; one press paints `.picture-image` from a blob URL; a reload
 shows it again with no second call; the blob in the `pictures` store is an
 image and smaller than what was sent; the sheet's `[data-undraw]` takes it out
 of storage and puts the offer back; and a 503 lands in `.picture-art-error`
-with the offer still there. The Worker half has a test of its own that drives
-`worker.fetch` with `globalThis.fetch` stubbed — it covers the three response
-shapes `outputImageOf` accepts, that the request carries no `generation_config`
-and names the image model, and that `/chat` still thinks at low and still
-leads with the fast model.
+with the offer still there. The Worker half now has a committed test rather
+than a scratchpad one — `worker/tools/picture-test.mjs` in Xerra's repo, which
+drives `worker.fetch` with `globalThis.fetch` stubbed and needs no key, no
+network and no money. It covers the Replicate request shape, both output
+shapes, the base64 chunking, the error mapping (402 out of credit, 404 wrong
+model, 429 rate-limited, a prediction still running at 45s), and that pulling
+`REPLICATE_API_TOKEN` puts it back on the Gemini path. Whether the picture is
+any *good* is the other tool, `worker/tools/draw-one.mjs`, which spends a cent
+and writes a file to look at.
 
 For the weakest-word score, `attemptScore` is worth driving straight at the
 module: five words with a 61 among them returns 61 and not Azure's 93, an
