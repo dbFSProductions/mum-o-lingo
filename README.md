@@ -9,7 +9,7 @@ and chicken. You hear a native voice, record yourself saying the same thing,
 and the app shows you how close you got: side-by-side waveforms, an intonation
 comparison, and a word-by-word pronunciation score.
 
-Six units, twenty lessons, a hundred and one cards:
+Six units, twenty-five lessons, a hundred and twenty-six cards:
 
 | Unit | What it's for |
 |---|---|
@@ -18,7 +18,7 @@ Six units, twenty lessons, a hundred and one cards:
 | **El restaurante** | Getting a table, ordering fish, and saying it was lovely |
 | **El mercado** | The fish counter, cheese and ham, chicken, and paying |
 | **La Navidad** | Just landed, Christmas greetings, and the Christmas table |
-| **Palabras** | Twenty-five everyday words, each with a daft picture to hang it on |
+| **Palabras** | Fifty everyday words, each with a daft picture to hang it on |
 
 It looks a little like a certain green owl on purpose, but there's no ads, no
 gems, no guilt — and every phrase is here because Mum will actually need it
@@ -63,7 +63,7 @@ A few things worth knowing:
   sitting above **Show me** — reach for the picture first. Remembering it *is*
   the trick working; being handed the answer isn't.
 - **Hang a picture on any word you keep losing.** It doesn't have to be one of
-  those twenty-five. Open any card, tap **Edit**, and at the bottom there are
+  those fifty. Open any card, tap **Edit**, and at the bottom there are
   two boxes: *Sounds like* and *Picture it*. One you make up yourself will beat
   anything written for you — the ruder and the more impossible, the better — but
   there's an **Invent a picture for me** button if you're stuck, and you can
