@@ -683,6 +683,282 @@ export const COURSE = [
       },
     ],
   },
+  /* El pasado — the shape of a past sentence, before its words.
+   *
+   * Ported from Deb-o-lingo, which took the mechanism from Xerra. The three
+   * shapes and the teaching order are hers; the sentences are not. Hers are
+   * written from a life lived in Spain — a job in Chicago, a flat, a week that
+   * repeats. Mum's are the trip: coming over from England with Dad, the son
+   * they came to see, the market, the fish, the cava, Christmas. Porting the
+   * sentences across would have handed her somebody else's past to talk about,
+   * which is the one thing these lessons can't afford — you cannot practise
+   * saying what happened to you in words about what happened to somebody else.
+   *
+   * Four lessons, five cards each, and the order is the argument: the line on
+   * its own, then the dot on its own, then the one that catches everybody out
+   * (today against yesterday), then all three mixed. Each single-shape lesson
+   * carries one card of another shape on purpose — a lesson whose name answers
+   * its own question trains the lesson, not the grammar.
+   *
+   * `marked` puts the ending, or the auxiliary pair, in [brackets] so the drill
+   * can light it up on the verb itself. It must reduce to `text` exactly. */
+  {
+    id: "pasado",
+    title: "El pasado",
+    subtitle: "Dot in a box, line — or reaching now?",
+    color: "#ff4b4b",
+    colorDark: "#d63d3d",
+    lessons: [
+      {
+        id: "pasado-1",
+        title: "The line \u00b7 -aba / -\u00eda",
+        phrases: [
+          {
+            id: "pasado-1-1",
+            text: "Trabajaba en una escuela.",
+            marked: "Trabaj[aba] en una escuela.",
+            infinitive: "trabajar \u2014 to work",
+            translation: "I used to work in a school.",
+            focusNote:
+              "tra-ba-HA-ba, stress on the -HA-. That -aba tail is the sound of the line \u2014 you'll hear it all lesson.",
+            aspect: "line",
+            aspectNote:
+              "No date, no edges \u2014 the -aba on its own says 'used to'. That is the line.",
+          },
+          {
+            id: "pasado-1-2",
+            text: "Ven\u00edamos cada verano.",
+            marked: "Ven[\u00edamos] cada verano.",
+            infinitive: "venir \u2014 to come",
+            translation: "We used to come every summer.",
+            focusNote:
+              "be-N\u00cd-a-mos \u2014 stress on the \u00cd. The v is soft, nearly a b.",
+            aspect: "line",
+            aspectNote:
+              "'Every summer' is a habit with no end put on it. -\u00edamos is the line in the 'we' form.",
+          },
+          {
+            id: "pasado-1-3",
+            text: "Mi hijo viv\u00eda en Madrid.",
+            marked: "Mi hijo viv[\u00eda] en Madrid.",
+            infinitive: "vivir \u2014 to live",
+            translation: "My son lived in Madrid.",
+            focusNote: "bi-B\u00cd-a \u2014 stress on the \u00cd. Both v's are soft.",
+            aspect: "line",
+            aspectNote:
+              "A stretch of his life with no edges named. Say the year he moved and it would be a dot.",
+          },
+          {
+            id: "pasado-1-4",
+            text: "Hac\u00eda mucho fr\u00edo.",
+            marked: "Hac[\u00eda] mucho fr\u00edo.",
+            infinitive: "hacer \u2014 to do, to make",
+            translation: "It was very cold.",
+            focusNote: "a-S\u00cd-a \u2014 the h is silent, so it starts on the a.",
+            aspect: "line",
+            aspectNote:
+              "Weather is background, not an event \u2014 the line. Spanish does the weather with hacer.",
+          },
+          {
+            id: "pasado-1-5",
+            text: "Ayer compr\u00e9 pescado.",
+            marked: "Ayer compr[\u00e9] pescado.",
+            infinitive: "comprar \u2014 to buy",
+            translation: "Yesterday I bought fish.",
+            focusNote:
+              "com-PR\u00c9 \u2014 stress right at the end. That final -\u00e9 is the dot, not the line.",
+            aspect: "dot",
+            aspectNote:
+              "The odd one out on purpose. 'Ayer' shuts a box round it, and the ending goes to -\u00e9.",
+          },
+        ],
+      },
+      {
+        id: "pasado-2",
+        title: "The dot in a box \u00b7 -\u00e9 / -\u00f3",
+        phrases: [
+          {
+            id: "pasado-2-1",
+            text: "Llegamos el martes.",
+            marked: "Lleg[amos] el martes.",
+            infinitive: "llegar \u2014 to arrive",
+            translation: "We arrived on Tuesday.",
+            focusNote: "ye-GA-mos \u2014 the ll is a y. Stress on the GA.",
+            aspect: "dot",
+            aspectNote:
+              "A named day is a shut box, and arriving happens once. A dot.",
+          },
+          {
+            id: "pasado-2-2",
+            text: "Anoche cenamos fuera.",
+            marked: "Anoche cen[amos] fuera.",
+            infinitive: "cenar \u2014 to have dinner",
+            translation: "Last night we ate out.",
+            focusNote: "se-NA-mos \u2014 stress on the NA. Anoche is a-NO-che.",
+            aspect: "dot",
+            aspectNote:
+              "Last night is finished and has edges. One dinner, one dot.",
+          },
+          {
+            id: "pasado-2-3",
+            text: "Mi hijo naci\u00f3 en marzo.",
+            marked: "Mi hijo nac[i\u00f3] en marzo.",
+            infinitive: "nacer \u2014 to be born",
+            translation: "My son was born in March.",
+            focusNote: "na-SI\u00d3 \u2014 stress on the very last syllable.",
+            aspect: "dot",
+            aspectNote:
+              "A single moment with a month round it \u2014 nobody is born for a while. -i\u00f3 is the dot in the he/she form.",
+          },
+          {
+            id: "pasado-2-4",
+            text: "Fuimos al mercado.",
+            marked: "[Fuimos] al mercado.",
+            infinitive: "ir \u2014 to go",
+            translation: "We went to the market.",
+            focusNote: "FUI-mos \u2014 one push, on the FUI.",
+            aspect: "dot",
+            aspectNote:
+              "ir escapes the endings in the dot as well: fuimos. One trip, finished.",
+          },
+          {
+            id: "pasado-2-5",
+            text: "\u00c9ramos muy j\u00f3venes.",
+            marked: "[\u00c9ramos] muy j\u00f3venes.",
+            infinitive: "ser \u2014 to be",
+            translation: "We were very young.",
+            focusNote:
+              "\u00c9-ra-mos \u2014 stress right at the front. The j in j\u00f3venes is the throaty one.",
+            aspect: "line",
+            aspectNote:
+              "The odd one out. ser is the verb that is the line without -aba or -\u00eda \u2014 and being young is a stretch, not a moment.",
+          },
+        ],
+      },
+      {
+        id: "pasado-3",
+        title: "Reaching now \u00b7 he + -ado / -ido",
+        phrases: [
+          {
+            id: "pasado-3-1",
+            text: "Hoy he comido pescado.",
+            marked: "Hoy [he] com[ido] pescado.",
+            infinitive: "comer \u2014 to eat",
+            translation: "Today I've eaten fish.",
+            focusNote: "e co-MI-do \u2014 the h is silent, so it is just 'e'.",
+            aspect: "presentPerfect",
+            aspectNote:
+              "'Hoy' still has now inside it, so Spain says he comido. Swap in 'ayer' and it becomes com\u00ed.",
+          },
+          {
+            id: "pasado-3-2",
+            text: "Ayer com\u00ed pescado.",
+            marked: "Ayer com[\u00ed] pescado.",
+            infinitive: "comer \u2014 to eat",
+            translation: "Yesterday I ate fish.",
+            focusNote: "co-M\u00cd \u2014 stress at the very end.",
+            aspect: "dot",
+            aspectNote:
+              "The same meal, one word different. 'Ayer' shuts the box, so the shape changes with it.",
+          },
+          {
+            id: "pasado-3-3",
+            text: "Esta ma\u00f1ana hemos ido al mercado.",
+            marked: "Esta ma\u00f1ana [hemos] [ido] al mercado.",
+            infinitive: "ir \u2014 to go",
+            translation: "This morning we've been to the market.",
+            focusNote: "E-mos I-do \u2014 both h's silent. Ma\u00f1ana is ma-NYA-na.",
+            aspect: "presentPerfect",
+            aspectNote:
+              "This morning is part of today, and today is not shut yet.",
+          },
+          {
+            id: "pasado-3-4",
+            text: "Todav\u00eda no he visto a mi hijo.",
+            marked: "Todav\u00eda no [he] [visto] a mi hijo.",
+            infinitive: "ver \u2014 to see",
+            translation: "I haven't seen my son yet.",
+            focusNote:
+              "to-da-B\u00cd-a no e BIS-to \u2014 visto is irregular, not 've\u00eddo'.",
+            aspect: "presentPerfect",
+            aspectNote:
+              "'Todav\u00eda' says the stretch is still open \u2014 still now, still waiting.",
+          },
+          {
+            id: "pasado-3-5",
+            text: "Esta semana hemos bebido mucho cava.",
+            marked: "Esta semana [hemos] beb[ido] mucho cava.",
+            infinitive: "beber \u2014 to drink",
+            translation: "This week we've drunk a lot of cava.",
+            focusNote: "E-mos be-BI-do \u2014 stress on the BI.",
+            aspect: "presentPerfect",
+            aspectNote:
+              "This week has now in it, so the stretch reaches the present.",
+          },
+        ],
+      },
+      {
+        id: "pasado-4",
+        title: "All three \u00b7 tiny ones",
+        phrases: [
+          {
+            id: "pasado-4-1",
+            text: "Antes no me gustaba el pescado.",
+            marked: "Antes no me gust[aba] el pescado.",
+            infinitive: "gustar \u2014 to please, to be liked",
+            translation: "I didn't use to like fish.",
+            focusNote: "goos-TA-ba \u2014 stress on the TA.",
+            aspect: "line",
+            aspectNote:
+              "'Antes' plus -aba is 'used to'. A state with no edges \u2014 the line.",
+          },
+          {
+            id: "pasado-4-2",
+            text: "Hoy he hablado con mi hijo.",
+            marked: "Hoy [he] habl[ado] con mi hijo.",
+            infinitive: "hablar \u2014 to speak",
+            translation: "Today I've spoken to my son.",
+            focusNote: "e a-BLA-do \u2014 both h's silent, stress on the BLA.",
+            aspect: "presentPerfect",
+            aspectNote: "Today is not over, so the stretch still reaches now.",
+          },
+          {
+            id: "pasado-4-3",
+            text: "El a\u00f1o pasado vinimos en diciembre.",
+            marked: "El a\u00f1o pasado vin[imos] en diciembre.",
+            infinitive: "venir \u2014 to come",
+            translation: "Last year we came in December.",
+            focusNote: "bi-NI-mos \u2014 stress on the NI. A\u00f1o is A-nyo.",
+            aspect: "dot",
+            aspectNote:
+              "Last year is shut and December names the moment inside it. A dot \u2014 against ven\u00edamos, which was the habit.",
+          },
+          {
+            id: "pasado-4-4",
+            text: "Siempre \u00edbamos a la playa.",
+            marked: "Siempre [\u00edbamos] a la playa.",
+            infinitive: "ir \u2014 to go",
+            translation: "We always used to go to the beach.",
+            focusNote: "\u00cd-ba-mos \u2014 stress right at the front.",
+            aspect: "line",
+            aspectNote:
+              "ir is the other verb that dodges both endings in the line: \u00edbamos. 'Siempre' makes it a habit.",
+          },
+          {
+            id: "pasado-4-5",
+            text: "Estuvimos aqu\u00ed dos semanas.",
+            marked: "[Estuvimos] aqu\u00ed dos semanas.",
+            infinitive: "estar \u2014 to be",
+            translation: "We were here for two weeks.",
+            focusNote: "es-tu-BI-mos \u2014 stress on the BI.",
+            aspect: "dot",
+            aspectNote:
+              "The one everybody gets wrong. 'Two weeks' sounds long, but it has both ends shut \u2014 length never decides it, edges do.",
+          },
+        ],
+      },
+    ],
+  },
   /* Palabras — vocabulary by the keyword-picture method.
    *
    * Every other unit teaches a phrase you say. This one teaches single words,

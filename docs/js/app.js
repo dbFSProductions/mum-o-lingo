@@ -10,7 +10,7 @@
 import {
   library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK,
   GENDERS, genderOf,
-  attemptScore,
+  attemptScore, ASPECTS, aspectOf, aspectChoices,
 } from "./store.js";
 import { COURSE, COURSE_LANGUAGE, LESSONS, lessonById } from "./content.js";
 import { Recorder, Player, analyse, relativeSemitones, resample } from "./audio.js";
@@ -57,6 +57,10 @@ const state = {
      it — and only ever true because she asked for it: at level two the picture
      is the hint, offered instead of the answer. */
   pictured: false,
+
+  /* Dot or line: which shape she picked for this card, or null while the
+     question is still standing. Per card — loadPhrase resets it. */
+  aspectChoice: null,
   revealed: true,
   peeked: false,
   loadingModel: false,
@@ -1319,6 +1323,7 @@ async function loadPhrase() {
   state.revealed = !state.recall;
   state.peeked = false;
   state.pictured = false;
+  state.aspectChoice = null;
   scoring.lastError = null;
   window.scrollTo(0, 0);
   if (!phrase) return render();
@@ -1368,6 +1373,37 @@ function renderDrill() {
   // withheld, because any of the three answers the question.
   const asking = state.recall && !state.revealed;
 
+  /* Dot or line: on a card that carries a shape, the lesson asks Mum to name
+     it before it will show her the sentence. The gate never shows Spanish, so
+     it stacks cleanly above level two — the card becomes whatever it was going
+     to be only after the shape is named. EDIT goes while the question stands
+     (the editor prints the sentence she is being asked to think about); the
+     quit and the bar stay. */
+  const shape = settings.aspectGate ? aspectOf(phrase) : null;
+  const gating = Boolean(shape) && !state.aspectChoice;
+
+  if (gating) {
+    view.innerHTML = `
+      <div class="lesson-top">
+        <button class="quit" id="quit" aria-label="Quit lesson">✕</button>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="link muted-link" style="visibility:hidden">EDIT</span>
+      </div>
+      ${aspectGateBody(phrase)}`;
+    document.getElementById("quit").onclick = quitLesson;
+    view.querySelectorAll("[data-aspect]").forEach((button) => {
+      button.onclick = () => {
+        /* Answering re-renders the whole drill, which is safe here in a way it
+           isn't after recording: the gate stands before any attempt exists, so
+           there is nothing on screen for a render() to throw away. */
+        state.aspectChoice = button.dataset.aspect;
+        render();
+      };
+    });
+    window.scrollTo(0, scrollY);
+    return;
+  }
+
   view.innerHTML = `
     <div class="lesson-top">
       <button class="quit" id="quit" aria-label="Quit lesson">✕</button>
@@ -1383,6 +1419,8 @@ function renderDrill() {
         : "Listen, then say it out loud"
     }</p>
 
+    ${aspectVerdict(shape, state.aspectChoice, asking)}
+
     <div class="card drill-card">
       ${state.recall ? `<div class="level-badge">Level 2 · from memory</div>` : ""}
       ${
@@ -1390,11 +1428,19 @@ function renderDrill() {
           ? `<p class="drill-text recall-prompt">${esc(phrase.translation)}</p>
              ${phrase.situation ? `<p class="drill-translation">${esc(phrase.situation)}</p>` : ""}
              <p class="tiny muted" style="margin:10px 0 0">Say it in Spanish, then you'll see it.</p>`
-          : `<p class="drill-text">${esc(phrase.text)}</p>
+          : `<p class="drill-text">${drillSpanish(phrase)}</p>
              ${
                state.showTranslation
                  ? `<p class="drill-translation">${esc(phrase.translation)}</p>`
                  : `<button class="link" id="reveal" style="padding-left:0">Show meaning</button>`
+             }
+             ${
+               /* The verb's dictionary form, said quietly — she should know
+                  what the -aba is hanging off. Behind showTranslation, since
+                  "to work" is half the meaning she asked to hide. */
+               phrase.infinitive && state.showTranslation
+                 ? `<p class="infinitive-line tiny muted">${esc(phrase.infinitive)}</p>`
+                 : ""
              }
              ${
                phrase.focusNote
@@ -1870,6 +1916,90 @@ function announceLevelUp(phrase) {
   if (state.recall || !settings.recallMode) return;
   if (library.goodAttempts(phrase.id) !== RECALL_AFTER) return;
   toast("¡Nivel 2! Next time you'll say this one from memory.", 3600);
+}
+
+/* The Spanish with its tense machinery lit up. `marked` on an El pasado card
+   is the text with the ending — or the auxiliary pair — in [brackets], and it
+   renders as a gold highlight on the drill card, so the -aba, the -é or the
+   `he ido` is seen on the verb itself rather than only read about in the
+   verdict. The brackets must reduce to the text exactly, or the plain text is
+   used instead — which is what keeps an edited card showing its edit (the
+   override changes `text`, not `marked`) and what makes a typo in the marks
+   cost only the highlight. */
+function drillSpanish(phrase) {
+  const marked = phrase.marked;
+  if (marked && marked.replace(/[\[\]]/g, "") === phrase.text) {
+    return esc(marked)
+      .replace(/\[/g, `<span class="ending-mark">`)
+      .replace(/\]/g, "</span>");
+  }
+  return esc(phrase.text);
+}
+
+/* Dot or line, asked before the sentence is on the screen. The card gives her
+   the English and the shapes are the whole of what she can do with it — no way
+   past the question except answering it, which is the point: the decision has
+   to happen before the words do, not after she has already read the ending.
+
+   The endings ride every choice button in bold and the verdict prints them in
+   big print, because ending ↔ shape is the association these lessons exist to
+   build — this is what's being drilled, not the phrases. The grammar-book term
+   stays small and italic underneath: on the screen every time, never the thing
+   she is asked for. */
+function aspectGateBody(phrase) {
+  const choices = aspectChoices(state.lesson?.queue);
+  /* Two buttons and the question names them both; the moment a lesson puts the
+     present perfect on the table, "Dot in a box, or line?" is literally the
+     wrong question — neither answer is on offer — so it widens. */
+  const question = choices.length > 2 ? "Which shape?" : "Dot in a box, or line?";
+  return `
+    <p class="instruction">${question}</p>
+
+    <div class="card drill-card">
+      <p class="drill-text recall-prompt">${esc(phrase.translation)}</p>
+      <p class="tiny muted" style="margin:10px 0 0">Decide the shape first. The Spanish comes after — with its ending.</p>
+    </div>
+
+    <div class="aspect-choices">
+      ${choices
+        .map((key) => [key, ASPECTS[key]])
+        .map(
+          ([key, aspect]) => `
+        <button class="aspect-choice" data-aspect="${key}">
+          <span class="aspect-mark">${aspect.mark}</span>
+          <span class="aspect-choice-body">
+            <strong>${esc(aspect.label)}</strong>
+            <span class="aspect-gloss">${esc(aspect.gloss)}</span>
+            <span class="aspect-endings">${esc(aspect.endings)}</span>
+            <span class="aspect-term">${esc(aspect.term)}</span>
+          </span>
+        </button>`
+        )
+        .join("")}
+    </div>`;
+}
+
+/* What she picked, what it was, and the ending in big print — directly above
+   the sentence, so the page reads shape first, then the words that have it.
+   The note is the one part that waits behind a level-two question: it explains
+   this particular sentence by quoting Spanish, often the very form she is
+   being asked to produce. It comes back the moment the card is revealed. */
+function aspectVerdict(shape, choice, asking) {
+  if (!shape || !choice) return "";
+  const right = choice === shape.key;
+  const picked = ASPECTS[choice];
+  const mine = picked?.label.toLowerCase() ?? "something else";
+  const theirs = shape.label.toLowerCase();
+  return `
+    <div class="card aspect-verdict ${right ? "right" : "wrong"}">
+      <span class="aspect-mark">${shape.mark}</span>
+      <span class="aspect-verdict-body">
+        <strong>${right ? `Yes — ${esc(theirs)}` : `Not quite — ${esc(theirs)}, not ${esc(mine)}`}</strong>
+        <span class="aspect-endings">${esc(shape.endings)}</span>
+        <span class="aspect-term">${esc(shape.term)}</span>
+        ${asking || !shape.note ? "" : `<span class="aspect-why">${esc(shape.note)}</span>`}
+      </span>
+    </div>`;
 }
 
 function renderComparison() {
@@ -2351,6 +2481,22 @@ function showPhrase(phrase) {
              } and this one turns into a memory question.`
        }</span>
      </div>
+     ${
+       /* The shape stated flat, with no gate and no verdict, even when the
+          drill's question is switched off: the sheet is where she looks a card
+          up rather than being tested on it. */
+       aspectOf(phrase)
+         ? `<div class="phrase-aspect">
+              <span class="aspect-mark">${aspectOf(phrase).mark}</span>
+              <span class="aspect-verdict-body">
+                <strong>${esc(aspectOf(phrase).label)}</strong>
+                <span class="aspect-endings">${esc(aspectOf(phrase).endings)}</span>
+                <span class="aspect-term">${esc(aspectOf(phrase).term)}${phrase.infinitive ? ` · ${esc(phrase.infinitive)}` : ""}</span>
+                ${aspectOf(phrase).note ? `<span class="aspect-why">${esc(aspectOf(phrase).note)}</span>` : ""}
+              </span>
+            </div>`
+         : ""
+     }
      ${
        /* Stated flat, where she is looking a word up rather than being asked
           for it — so no hint button and no waiting for anything. */
@@ -3348,6 +3494,14 @@ function renderSettings() {
       </div>
       <p class="tiny muted" style="margin:8px 0 0">Once you've said a card well ${RECALL_AFTER} times it stops
         showing you the Spanish — you get the English and have to remember it. There's a "Show me" if you're stuck.</p>
+      <div class="switch-row">
+        <span>Dot in a box, or line — name the shape first</span>
+        <input type="checkbox" id="s-aspect" ${settings.aspectGate ? "checked" : ""}>
+      </div>
+      <p class="tiny muted" style="margin:8px 0 0">On the El pasado lessons the drill shows you the English and asks
+        which shape the past is — a dot in a box (<em>-é, -ó</em>), a line (<em>-aba, -ía</em>), or a line reaching
+        now (<em>he + -ado</em>) — before it shows the Spanish. Cards outside those lessons never carry a shape, so
+        this does nothing to the rest of the course.</p>
     </div>
 
     <div class="section-label">Audio</div>
@@ -3399,6 +3553,11 @@ function renderSettings() {
 
   document.getElementById("s-translation").onchange = (event) => {
     settings.showTranslationUpFront = event.target.checked;
+    settings.save();
+  };
+
+  document.getElementById("s-aspect").onchange = (event) => {
+    settings.aspectGate = event.target.checked;
     settings.save();
   };
 
