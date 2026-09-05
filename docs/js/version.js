@@ -11,4 +11,4 @@
  * is also the answer to "is the fix in, or has my phone not caught up?"
  *
  * Xerra carries the same pair. Keep them in step. */
-export const VERSION = "v23";
+export const VERSION = "v24";

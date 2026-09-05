@@ -1109,6 +1109,11 @@ function renderPath(section = null) {
      shown — a tile that comes and goes leaves a hole in a grid — and with no
      assistant it says so, and its page names Settings as the fix.
 
+     The order is Practice, Words, Sobre mí, Quick, The Past, Phrases. Sobre mí
+     took The Past's place on the second row because it is asked for far more
+     often than a grammar drill is, and the two you reach for should be above
+     the fold; The Past moved down beside Phrases rather than out.
+
      Phrases came in off the bottom row to make the sixth square. It was a
      wide button across the foot of the grid, on the argument that the whole
      library outranks a slice of it; five squares and a strip read worse than
@@ -1127,12 +1132,6 @@ function renderPath(section = null) {
       { key: "words", title: SECTION_TITLES.words.title, blurb: SECTION_TITLES.words.sub, colour: "purple",
         count: `${count("palabras")} words`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>` },
-      { key: "past", title: SECTION_TITLES.past.title, blurb: SECTION_TITLES.past.sub, colour: "gold",
-        count: `${count("pasado")} phrases`,
-        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
-      { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
-        count: asked ? `${asked} asked for` : "Ask for one",
-        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>` },
       { key: "about", title: ABOUT_DECK, blurb: "Cards written about you", colour: "green",
         count: about
           ? `${about} card${about === 1 ? "" : "s"} about you`
@@ -1140,6 +1139,12 @@ function renderPath(section = null) {
           ? "Tell it about you"
           : "Needs the card builder",
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>` },
+      { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
+        count: asked ? `${asked} asked for` : "Ask for one",
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>` },
+      { key: "past", title: SECTION_TITLES.past.title, blurb: SECTION_TITLES.past.sub, colour: "gold",
+        count: `${count("pasado")} phrases`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
       { key: "phrases", title: "All Phrases", blurb: "Every card, searchable", colour: "blue",
         count: `${library.drillable().length} cards`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg>` },

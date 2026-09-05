@@ -131,6 +131,9 @@ greeting and six tiles, and nothing else — the path lives behind **Practice**.
   Settings. All Phrases still lists the cards under their own label, because
   that page is every card. Ported from Xerra, where the same row came out of
   Decks the same day.
+- **Sobre mí sits where The Past was, and The Past went down beside Phrases.**
+  The order is Practice, Words, Sobre mí, Quick, The Past, Phrases. Asked for
+  from the phone; the two you reach for most belong on the top two rows.
 - **Phrases is a square too, and that is what makes six.** It was `.tile-wide`,
   a button across the bottom on the argument that the whole library outranks a
   slice of it; five squares and a strip read worse than six squares, and the
