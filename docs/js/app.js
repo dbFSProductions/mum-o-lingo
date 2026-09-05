@@ -8,7 +8,7 @@
 // the streak record what Mum has done, they don't gate what she may do next.
 
 import {
-  library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK, QUICK_DECK,
+  library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK, QUICK_DECK, WORDS_DECK,
   GENDERS, genderOf,
   attemptScore, ASPECTS, aspectOf, aspectChoices,
 } from "./store.js";
@@ -681,6 +681,12 @@ view.addEventListener("click", (event) => {
     stopEverything();
     state.tab = "add";
     render();
+    return;
+  }
+  if (event.target.closest("[data-add-word]")) {
+    stopEverything();
+    state.tab = "add-word";
+    render();
   }
 });
 
@@ -714,6 +720,7 @@ function render() {
     return renderPath(state.section);
   }
   if (state.tab === "add") return renderAdd();
+  if (state.tab === "add-word") return renderAddWord();
   return renderSettings();
 }
 
@@ -749,7 +756,9 @@ function ownUnit() {
      card of theirs on the path here would be the same card in two places. */
   const phrases = library
     .ownPhrases()
-    .filter((p) => p.text.trim() && p.deck !== ABOUT_DECK && p.deck !== QUICK_DECK);
+    .filter(
+      (p) => p.text.trim() && p.deck !== ABOUT_DECK && p.deck !== QUICK_DECK && p.deck !== WORDS_DECK
+    );
   if (!phrases.length) return null;
 
   return {
@@ -812,9 +821,34 @@ const PRACTICE = "practice";
    both the tile and the section head. */
 const SECTION_TITLES = {
   [PRACTICE]: { title: "Practice", sub: "Lesson by lesson, in order" },
-  past: { title: "Past", sub: "Name the shape, then say it" },
+  past: { title: "The Past", sub: "Name the shape, then say it" },
   words: { title: "Words", sub: "A word, a sound, a picture" },
 };
+
+/* Words you added yourself, as a unit under the course's Palabras. It is the
+   same shape as `ownUnit` and chunked the same way — the Words section shows
+   the course unit and then this one, so a word you added is where you would
+   look for it rather than filed under "Lo tuyo" with your phrases. */
+function myWordsUnit() {
+  const phrases = library.ownPhrases().filter((p) => p.text.trim() && p.deck === WORDS_DECK);
+  if (!phrases.length) return null;
+  return {
+    id: "mis-palabras",
+    title: "Your words",
+    subtitle: "The ones you added",
+    color: "var(--purple)",
+    colorDark: "var(--purple-dark)",
+    lessons: chunkLessons(phrases, "words", "Your words"),
+  };
+}
+
+/* What a section draws. Words is the one that is two units rather than one,
+   which is why this returns a list and `renderPath` spreads it. */
+function unitsFor(section) {
+  if (section === PRACTICE) return pathUnits();
+  if (section === "words") return [unitFor("words"), myWordsUnit()].filter(Boolean);
+  return [unitFor(section)].filter(Boolean);
+}
 
 function unitFor(section) {
   const id = TILE_UNITS[section];
@@ -872,7 +906,7 @@ function renderPath(section = null) {
   const offsets = [0, -1, 1];
   let nodeIndex = 0;
 
-  const units = (section === PRACTICE ? pathUnits() : section ? [unitFor(section)].filter(Boolean) : [])
+  const units = (section ? unitsFor(section) : [])
     .map((unit) => {
       /* Sobre mí leads with a node that isn't a lesson. Every other node on
          the path drills; this one opens the interview, because the interview
@@ -963,11 +997,13 @@ function renderPath(section = null) {
            <button class="tile tile-wide tile-blue" data-section="phrases">
              <span class="tile-mark" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>
              <span class="tile-wide-body">
-               <span class="tile-title">Phrases</span>
+               <span class="tile-title">All Phrases</span>
                <span class="tile-blurb">Every card, searchable — the course plus your own</span>
              </span>
            </button>`
     }
+
+    ${section === "words" && settings.hasAssistant ? `<button class="btn section-add" data-add-word>Add a word</button>` : ""}
 
     ${units}
 
@@ -2501,6 +2537,252 @@ function drawContour(ctx, contour, width, y, colour) {
 }
 
 // ----------------------------------------------------------------- phrases
+
+/* Add a word — the vocabulary composer, and the thing the app could not do
+   until now.
+
+   `/complete-card` writes a *phrase*: a situation, a usage note, a
+   pronunciation tip, replies. There was no way to author `sounds` and
+   `picture` at all — they arrived with the seed content, or you added a phrase
+   and then reached for the editor's "Invent a picture for me" on a card that
+   already existed. So the Words section was read-only in practice, which is a
+   strange thing for a section to be in an app whose whole point is that you
+   add what you personally keep losing.
+
+   It is deliberately not a second Add tab with a type picker at the top. You
+   press "Add a word" from inside Words, so the kind is already decided by the
+   time the form opens, and the form asks only what a word needs.
+
+   Almost all of it is parts that already existed: `composerField`,
+   `genderField`, `deckField`, and the editor's own picture call. It uses the
+   editor's field ids (`f-text`, `f-translation`, `f-sounds`, `f-picture`) so
+   `wirePictureAI` works here verbatim rather than being copied — which is why
+   that function now optional-chains the boxes a word hasn't got. */
+function renderAddWord() {
+  const defaultDeck = WORDS_DECK;
+
+  view.innerHTML = `
+    <header class="home-head section-head">
+      <div class="wordmark">Add a word</div>
+      ${homeLink()}
+    </header>
+    <p class="muted add-intro">Put in the word <em>or</em> the English — whichever you have — and the rest can be
+      filled in for you: the other side, the gender, the sound it hides, and a scene to hang it on. Write your own
+      picture if you have a better one.</p>
+
+    ${
+      settings.hasAssistant
+        ? ""
+        : `<div class="notice add-setup">Without the card assistant you can still add the word and write your own
+             picture — the invent button needs the Worker address and passcode.
+             <button class="link" id="open-assistant-settings">Set it up</button></div>`
+    }
+
+    <div class="card add-card">
+      <div class="field">
+        <div class="field-head">
+          <label for="f-text">The word</label>
+        </div>
+        <textarea id="f-text" rows="1" lang="${COURSE_LANGUAGE}" autocapitalize="none"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="f-translation">English</label>
+        </div>
+        <textarea id="f-translation" rows="1" lang="en-GB" autocapitalize="none"></textarea>
+      </div>
+
+      ${genderField(null, "f-gender")}
+
+      ${
+        settings.hasAssistant
+          ? `<button class="btn btn-primary" id="word-fill" style="width:100%;margin-bottom:10px">Fill in the rest for me</button>`
+          : ""
+      }
+      <div id="f-picture-note" class="notice" hidden></div>
+
+      <label class="field"><span>Sounds like</span>
+        <textarea id="f-sounds" rows="2"></textarea></label>
+      <label class="field"><span>Picture</span>
+        <textarea id="f-picture" rows="3"></textarea></label>
+      <p class="tiny muted" style="margin:-6px 0 12px">Describe your own scene here and it will be kept — a picture
+        you invented outlasts one you were handed. Leave it empty and one will be made for you.</p>
+
+      
+
+      <div class="btn-row">
+        <button class="btn" id="word-save">Save and add another</button>
+        <button class="btn btn-primary" id="word-practise">Save and practise now</button>
+      </div>
+      <div id="word-error" class="notice bad" hidden></div>
+    </div>`;
+
+  document.getElementById("open-assistant-settings")?.addEventListener("click", () => {
+    stopEverything();
+    state.tab = "settings";
+    render();
+  });
+
+  wireWordFill();
+
+  /* "Fill in the rest for me" — one press for the whole card.
+
+     It replaced a picture-only button, which could not run until both language
+     boxes were filled and so made you do the app's job before it would help.
+     Two calls, in order, because they answer different questions and the second
+     needs the first's answer:
+
+     1. `/complete-card` for the missing side. Whichever box you left empty is
+        what it fills — the word from the English, or the English from the word.
+        Skipped entirely when both are already there, so a card you typed out in
+        full costs one call rather than two.
+     2. `/chat` for the sound bridge and the scene, exactly as the editor asks
+        for them, using the *completed* word rather than what was in the box —
+        a bridge built from a blank is nothing.
+
+     **A picture you wrote yourself is never overwritten.** Only `sounds` is
+     taken in that case, which is the one thing you cannot reasonably work out
+     and the reason the whole call still runs. The gender needs no call at all:
+     it is read off the article once the word is in the box. */
+  function wireWordFill() {
+    const button = document.getElementById("word-fill");
+    if (!button) return;
+    const noteBox = document.getElementById("f-picture-note");
+    const soundsField = document.getElementById("f-sounds");
+    const pictureField = document.getElementById("f-picture");
+    const englishField = document.getElementById("f-translation");
+
+    button.onclick = async () => {
+      const had = { text: textField.value.trim(), english: englishField.value.trim() };
+      if (!had.text && !had.english) {
+        noteBox.className = "notice bad";
+        noteBox.textContent = `Put in the Spanish word or its English first — either will do.`;
+        noteBox.hidden = false;
+        return;
+      }
+      const mine = pictureField.value.trim();
+      button.disabled = true;
+      button.innerHTML = `<span class="spinner"></span> Working on it…`;
+      noteBox.hidden = true;
+      try {
+        let word = had.text;
+        let english = had.english;
+        if (!word || !english) {
+          const result = await cardAssistant.complete(
+            {
+              target: had.text,
+              english: had.english,
+              situation: "",
+              deck: WORDS_DECK,
+              languageCode: COURSE_LANGUAGE,
+              languageName: "Spanish (Spain)",
+            },
+            settings
+          );
+          // The page can be gone by now — you left while it was thinking.
+          if (!document.getElementById("f-text")) return;
+          word = result.text?.trim() || word;
+          english = result.translation?.trim() || english;
+          textField.value = word;
+          englishField.value = english;
+          textField.dispatchEvent(new Event("input"));
+        }
+
+        const { reply } = await cardAssistant.chat(
+          {
+            ...chatContext({ text: word, translation: english, replies: [] }),
+            history: [{ role: "user", text: mine ? reimagineRequest({ sounds: "", picture: mine }) : PICTURE_REQUEST }],
+          },
+          settings
+        );
+        if (!document.getElementById("f-picture")) return;
+        const made = parsePicture(reply);
+        if (made.sounds) soundsField.value = made.sounds;
+        // Yours stays yours; only an empty box gets filled.
+        if (!mine && made.picture) pictureField.value = made.picture;
+        autosize(soundsField);
+        autosize(pictureField);
+        autosizeAll(view);
+        noteBox.className = "notice";
+        noteBox.textContent = mine
+          ? "Have a look — your picture was kept, and it only counts once you Save."
+          : "Have a look — change anything that isn't yours, and it only counts once you Save.";
+        noteBox.hidden = false;
+      } catch (error) {
+        noteBox.className = "notice bad";
+        noteBox.textContent = error.message;
+        noteBox.hidden = false;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Fill in the rest for me";
+      }
+    };
+  }
+
+  /* The gender select's first option reads the article off the word, so it has
+     to follow the box rather than being decided once at render — you have not
+     typed the word yet when this is drawn. */
+  const textField = document.getElementById("f-text");
+  const genderSelect = document.getElementById("f-gender");
+  textField.addEventListener("input", () => {
+    const derived = genderOf({ text: textField.value });
+    genderSelect.options[0].textContent = derived
+      ? `From the article — ${GENDERS[derived].label}`
+      : "From the article — it doesn't say";
+  });
+
+  document.getElementById("word-save").onclick = () => saveWord({ practise: false });
+  document.getElementById("word-practise").onclick = () => saveWord({ practise: true });
+
+  function saveWord({ practise }) {
+    const errorBox = document.getElementById("word-error");
+    const text = textField.value.trim();
+    const translation = document.getElementById("f-translation").value.trim();
+    const picture = document.getElementById("f-picture").value.trim();
+    const deck = WORDS_DECK;
+
+    const fail = (message) => {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+    };
+    errorBox.hidden = true;
+
+    /* One side is enough. The scene needs both, but *filling in* the missing
+       one is what the assistant is for — insisting on both up front made you do
+       the app's job before it would take the card. A picture is optional too:
+       file the word now, hang something on it later. */
+    if (!text && !translation) {
+      return fail(`Put in the Spanish word or its English — either will do.`);
+    }
+    const duplicate =
+      text &&
+      library.allPhrases().some((phrase) => normaliseSentence(phrase.text) === normaliseSentence(text));
+    if (duplicate) return fail("That word is already in the library.");
+
+    const saved = library.addPhrase({
+      text,
+      translation,
+      deck,
+      gender: genderSelect.value || null,
+      sounds: document.getElementById("f-sounds").value.trim() || null,
+      picture: picture || null,
+    });
+
+    if (practise) {
+      stopEverything();
+      const queue = library.ownPhrases().filter((p) => p.deck === WORDS_DECK && p.text.trim());
+      const at = queue.findIndex((p) => p.id === saved.id);
+      state.tab = "learn";
+      state.section = null;
+      toast("Added to your words.");
+      startPractice(at > 0 ? [...queue.slice(at), ...queue.slice(0, at)] : queue);
+      return;
+    }
+    renderAddWord();
+    toast("Added to your words. Next one?");
+  }
+}
 
 /* Quick — the phrase you need in the next thirty seconds.
 

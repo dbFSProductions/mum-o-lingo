@@ -65,6 +65,12 @@ export const ABOUT_DECK = "Sobre mí";
    behind its tile and once on the path under "Lo tuyo". */
 export const QUICK_DECK = "Quick";
 
+/* And where a word you add yourself is filed. The Palabras unit is course
+   content in content.js and cannot be added to, so your own words need a pile
+   of their own — which the Words section then shows underneath the course
+   unit. An ordinary deck name, like the two above. */
+export const WORDS_DECK = "Words";
+
 /* Level two. A card is read aloud until it has been said well four times;
    after that the drill shows only the English and Mum has to produce the
    Spanish from memory. Trying to remember is the part that makes it stick —
