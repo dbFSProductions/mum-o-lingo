@@ -522,6 +522,22 @@ button { font: inherit; }
 .tile-title { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.01em; }
 .tile-blurb { font-size: 0.78rem; font-weight: 700; opacity: 0.95; line-height: 1.25; }
 .tile-count { font-size: 0.72rem; font-weight: 800; opacity: 0.85; margin-top: 4px; }
+/* The Phrases button, across the bottom where the first unit banner used to
+   be. Same tile idiom turned on its side: it is one of the four ways in, but
+   it is the whole library rather than one slice of it, so it gets the full
+   width instead of a quarter of the grid. */
+.tile-wide {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 0;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+.tile-wide .tile-mark { margin-bottom: 0; }
+.tile-wide-body { display: flex; flex-direction: column; gap: 3px; text-align: left; min-width: 0; }
+
 .tile-blue { background: var(--blue); box-shadow: 0 4px 0 var(--blue-dark); }
 .tile-gold { background: var(--gold); box-shadow: 0 4px 0 var(--gold-dark); color: #4b4b4b; }
 .tile-purple { background: var(--purple); box-shadow: 0 4px 0 var(--purple-dark); }
