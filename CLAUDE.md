@@ -107,6 +107,31 @@ rarer still. Ported from Xerra, where the same bar had the same problem.
 - **Every page below home prints `homeLink()`** — *‹ Home* — behind one
   delegated listener on `view`, so a page only has to print the link.
 
+### Home is four tiles and a button; the path is one tap in
+
+The first cut put the tiles *above* the path, so the home screen was still the
+winding course with four squares on top of it. Now home is the header, the
+greeting, the four tiles and the Phrases button, and nothing else — the path
+lives behind **Practice**.
+
+- **`PRACTICE` is a section like the others**, not a special case of "no
+  section". Three places test for it, which is why it is a named constant: a
+  typo in any of them draws an empty path rather than erroring.
+- **The Phrases button is a tile turned on its side.** `.tile-wide` is the same
+  idiom in one row across the bottom, where the first unit banner used to be.
+  It gets the full width because it is the whole library rather than one slice
+  of it — Practice, Past and Words are each a quarter of the grid because each
+  is a part.
+- **`SECTION_TITLES` is what a section is called on the way in, and it is
+  deliberately not the unit's own title.** The Palabras unit is still called
+  Palabras in `content.js`; **Words** is what the tile says and what the page
+  says once you are in it. A tile reading Words that opens a page reading
+  Palabras is two names for one place, and that is exactly what the first cut
+  did. One table, read by both the tile and the section head — change a name
+  there and both follow.
+- **Mézclalo moved with the path.** It is the end of the course, so it belongs
+  behind Practice rather than on a home screen that no longer shows lessons.
+
 ### El pasado and Palabras came off the path
 
 `TILE_UNITS` is the whole of it: those two units are reached through a tile

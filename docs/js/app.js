@@ -797,6 +797,25 @@ function aboutUnit() {
    drawn by the same `renderPath`. Only where you reach them changed. */
 const TILE_UNITS = { past: "pasado", words: "palabras" };
 
+/* The course path is a section like the others now, rather than the thing the
+   home screen *is*. Home is four tiles and the Phrases button; the winding
+   path — Saludos through Mézclalo — lives one tap in, behind Practice.
+
+   Named rather than spelled inline because three places test for it and a
+   typo in any of them would silently draw an empty path. */
+const PRACTICE = "practice";
+
+/* What a section is called, and it is deliberately not the unit's own title.
+   The Palabras unit is called Palabras in content.js and stays that way — but
+   "Words" is what it is called on the way in, and a tile saying Words that
+   opens a page saying Palabras is two names for one place. One table, read by
+   both the tile and the section head. */
+const SECTION_TITLES = {
+  [PRACTICE]: { title: "Practice", sub: "Lesson by lesson, in order" },
+  past: { title: "Past", sub: "Name the shape, then say it" },
+  words: { title: "Words", sub: "A word, a sound, a picture" },
+};
+
 function unitFor(section) {
   const id = TILE_UNITS[section];
   return id ? allUnits().find((unit) => unit.id === id) ?? null : null;
@@ -853,7 +872,7 @@ function renderPath(section = null) {
   const offsets = [0, -1, 1];
   let nodeIndex = 0;
 
-  const units = (section ? [unitFor(section)].filter(Boolean) : pathUnits())
+  const units = (section === PRACTICE ? pathUnits() : section ? [unitFor(section)].filter(Boolean) : [])
     .map((unit) => {
       /* Sobre mí leads with a node that isn't a lesson. Every other node on
          the path drills; this one opens the interview, because the interview
@@ -907,12 +926,15 @@ function renderPath(section = null) {
     .join("");
 
   const unit = section ? unitFor(section) : null;
+  const named = SECTION_TITLES[section];
+  const sectionTitle = named?.title ?? unit?.title ?? "";
+  const sectionSub = named?.sub ?? unit?.subtitle ?? "";
 
   view.innerHTML = `
     ${
       section
         ? `<header class="home-head section-head">
-             <div class="wordmark">${esc(unit?.title ?? "")}</div>
+             <div class="wordmark">${esc(sectionTitle)}</div>
              ${homeLink()}
            </header>`
         : `<header class="home-head">
@@ -928,20 +950,28 @@ function renderPath(section = null) {
 
     ${
       section
-        ? unit?.subtitle
-          ? `<p class="muted section-intro">${esc(unit.subtitle)}</p>`
+        ? sectionSub
+          ? `<p class="muted section-intro">${esc(sectionSub)}</p>`
           : ""
         : `<div class="mascot-card">
              ${parrotSVG(74)}
              <div class="bubble">${esc(greeting)}</div>
            </div>
 
-           ${tiles()}`
+           ${tiles()}
+
+           <button class="tile tile-wide tile-blue" data-section="phrases">
+             <span class="tile-mark" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>
+             <span class="tile-wide-body">
+               <span class="tile-title">Phrases</span>
+               <span class="tile-blurb">Every card, searchable — the course plus your own</span>
+             </span>
+           </button>`
     }
 
     ${units}
 
-    ${section ? "" : `
+    ${section !== PRACTICE ? "" : `
     <section class="unit">
       <div class="unit-banner mix-banner" style="--unit:var(--blue);--unit-dark:var(--blue-dark)">
         <div class="unit-name">Mézclalo</div>
@@ -1022,13 +1052,13 @@ function renderPath(section = null) {
     };
     const asked = library.ownPhrases().filter((p) => p.deck === QUICK_DECK && p.text.trim()).length;
     const rows = [
-      { key: "phrases", title: "Phrases", blurb: "Everything you can say", colour: "blue",
-        count: `${library.drillable().length} phrases`,
-        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg>` },
-      { key: "past", title: "Past", blurb: "Name the shape, then say it", colour: "gold",
+      { key: PRACTICE, title: SECTION_TITLES[PRACTICE].title, blurb: SECTION_TITLES[PRACTICE].sub, colour: "blue",
+        count: `${pathUnits().reduce((n, u) => n + u.lessons.reduce((m, l) => m + l.phrases.length, 0), 0)} phrases`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M6 10.5V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/></svg>` },
+      { key: "past", title: SECTION_TITLES.past.title, blurb: SECTION_TITLES.past.sub, colour: "gold",
         count: `${count("pasado")} phrases`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
-      { key: "words", title: "Palabras", blurb: "A word, a sound, a picture", colour: "purple",
+      { key: "words", title: SECTION_TITLES.words.title, blurb: SECTION_TITLES.words.sub, colour: "purple",
         count: `${count("palabras")} words`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>` },
       { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
