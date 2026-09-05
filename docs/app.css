@@ -571,7 +571,16 @@ button { font: inherit; }
   letter-spacing: -0.01em;
   margin: 0 0 10px;
 }
-.drill-translation { color: var(--text-2); font-weight: 600; margin-bottom: 12px; }
+/* The English was 1rem against the word's 1.55rem and a full shade lighter, so
+   on a Words card — "Hoy" large, "today" small and grey under it — the half you
+   are actually trying to learn was the half you had to hunt for. Bigger, and
+   only one step down in colour. */
+.drill-translation {
+  color: var(--text-2);
+  font-size: 1.12rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
 
 .focus-note {
   background: color-mix(in srgb, var(--blue) 10%, transparent);
@@ -1260,6 +1269,31 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
   white-space: nowrap;
   color: var(--text);
 }
+
+/* Each shape gets its own colour, and every choice gets it equally.
+
+   The screen was black and white until you answered — reported as looking
+   broken, or unfinished. The reason it had no colour is still good: a coloured
+   *choice* reads as the recommended one. So the colour is on the mark rather
+   than on the button, one hue per shape, applied to all of them at once — that
+   is a legend, not a recommendation. The same colour follows the shape into
+   the verdict and onto the phrase sheet, so the picture and the colour are
+   learned together.
+
+   The tint is mixed from `currentColor`, so a new shape needs one line below
+   and nothing else. */
+.aspect-mark {
+  border-radius: 12px;
+  background: color-mix(in srgb, currentColor 13%, transparent);
+  padding: 12px 6px;
+}
+.shape-dot { color: var(--orange); }
+.shape-line { color: var(--blue); }
+.shape-presentPerfect { color: var(--purple); }
+
+/* On the phrase sheet the block already sits on a tint of its own, so the mark
+   keeps its colour but drops the second background. */
+.phrase-aspect .aspect-mark { background: transparent; }
 
 .aspect-choice-body, .aspect-verdict-body { display: block; min-width: 0; }
 .aspect-gloss {
