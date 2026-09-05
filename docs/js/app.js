@@ -8,7 +8,7 @@
 // the streak record what Mum has done, they don't gate what she may do next.
 
 import {
-  library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK,
+  library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK, QUICK_DECK,
   GENDERS, genderOf,
   attemptScore, ASPECTS, aspectOf, aspectChoices,
 } from "./store.js";
@@ -19,7 +19,6 @@ import { cardAssistant } from "./card-assistant.js";
 import { VERSION } from "./version.js";
 
 const view = document.getElementById("view");
-const tabbar = document.getElementById("tabbar");
 const sheet = document.getElementById("sheet");
 const sheetTitle = document.getElementById("sheet-title");
 const sheetBody = document.getElementById("sheet-body");
@@ -37,7 +36,16 @@ const PASS_OK = 75;
 
 const state = {
   tab: "learn", // learn | phrases | add | settings
-  stage: "path", // within learn: path | drill | complete | about
+  stage: "path",
+
+  /* Which tile you are inside, or null for the home screen itself. The tiles
+     are a filter over the same path the home screen draws, not a second
+     renderer — see `renderPath`. */
+  section: null,
+
+  /* The last thing Quick answered, so the card survives a repaint. Cleared
+     when you ask again, practise it, or throw it away. */
+  quick: null, // within learn: path | drill | complete | about
   lesson: null, // { id, title, color, colorDark, queue, index, results, practice }
   celebration: null,
 
@@ -636,21 +644,46 @@ function shuffle(array) {
 
 // -------------------------------------------------------------------- tabs
 
-tabbar.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-tab]");
-  if (!button) return;
+/* There is no tab bar any more. The home screen is the wordmark, four tiles
+   and the path, and everything else is reached from it — so this is the way
+   back, and every page below prints `homeLink()`.
+
+   Ported from Xerra, where the same four buttons had the same problem: they
+   were never peers. Learn was the home screen, Phrases and Add were things you
+   do occasionally, Settings rarer still. */
+function goHome() {
   stopEverything();
-  state.tab = button.dataset.tab;
+  state.tab = "learn";
   state.stage = "path";
   state.lesson = null;
+  state.section = null;
   render();
+}
+
+function homeLink() {
+  return `<button class="link" data-go-home="1">‹ Home</button>`;
+}
+
+/* A toothed cog, not the spoked circle the tab bar used. Under the word
+   "Settings" that read fine; alone on a banner it reads as a brightness icon —
+   reported on Xerra as simply not being findable, and fixed there first. */
+const COG_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.6a7.6 7.6 0 0 0 0-3.2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-2.8-1.6L13.9 2h-3.8l-.4 2.9a7.6 7.6 0 0 0-2.8 1.6l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3.2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 2.8 1.6l.4 2.9h3.8l.4-2.9a7.6 7.6 0 0 0 2.8-1.6l2.3 1 2-3.4z"/></svg>`;
+
+view.addEventListener("click", (event) => {
+  if (event.target.closest("[data-go-home]")) return goHome();
+  if (event.target.closest("[data-open-settings]")) {
+    stopEverything();
+    state.tab = "settings";
+    render();
+    return;
+  }
+  if (event.target.closest("[data-open-add]")) {
+    stopEverything();
+    state.tab = "add";
+    render();
+  }
 });
 
-function syncTabs() {
-  for (const tab of tabbar.querySelectorAll(".tab")) {
-    tab.setAttribute("aria-current", String(tab.dataset.tab === state.tab));
-  }
-}
 
 function stopEverything() {
   player.stop();
@@ -663,23 +696,23 @@ function stopEverything() {
 // ------------------------------------------------------------------ render
 
 function render() {
-  syncTabs();
   // Sobre mí keeps the tab bar: it is a place you go, not a lesson you are in.
   const inLesson = state.tab === "learn" && (state.stage === "drill" || state.stage === "complete");
   document.body.classList.toggle("in-lesson", inLesson);
   // Scroll to the top only when moving to a different screen. Re-renders of
   // the same screen (the Azure score landing, revealing the translation)
   // must not jump the page — that was hiding the waveform comparison.
-  const screen = `${state.tab}:${state.tab === "learn" ? state.stage : ""}`;
+  const screen = `${state.tab}:${state.tab === "learn" ? `${state.stage}:${state.section ?? ""}` : ""}`;
   if (screen !== render.lastScreen) window.scrollTo(0, 0);
   render.lastScreen = screen;
   if (state.tab === "learn") {
     if (state.stage === "drill") return renderDrill();
     if (state.stage === "complete") return renderComplete();
     if (state.stage === "about") return renderAbout();
-    return renderPath();
+    if (state.section === "phrases") return renderPhrases();
+    if (state.section === "quick") return renderQuick();
+    return renderPath(state.section);
   }
-  if (state.tab === "phrases") return renderPhrases();
   if (state.tab === "add") return renderAdd();
   return renderSettings();
 }
@@ -712,7 +745,11 @@ function chunkLessons(phrases, prefix, name) {
 /** Her own cards, minus the ones the interview wrote — those get their own
     unit below, so the two lists can't shuffle each other's lesson ids. */
 function ownUnit() {
-  const phrases = library.ownPhrases().filter((p) => p.text.trim() && p.deck !== ABOUT_DECK);
+  /* Sobre mí and Quick both have somewhere of their own to be listed, so a
+     card of theirs on the path here would be the same card in two places. */
+  const phrases = library
+    .ownPhrases()
+    .filter((p) => p.text.trim() && p.deck !== ABOUT_DECK && p.deck !== QUICK_DECK);
   if (!phrases.length) return null;
 
   return {
@@ -748,6 +785,29 @@ function aboutUnit() {
 }
 
 /** The course units plus the two generated ones, in path order. */
+/* The two course units that are reached through a tile instead of the path.
+
+   El pasado and Palabras are not "next" in any sense — they are a grammar
+   drill and a vocabulary pile you dip into, and strung out along the winding
+   path they buried the everyday lessons under twenty more nodes you were never
+   working through in order. Behind a tile they are one tap and the path goes
+   back to being the thing you are actually progressing along.
+
+   They are still ordinary units: same shape, same lessons, same progress ticks,
+   drawn by the same `renderPath`. Only where you reach them changed. */
+const TILE_UNITS = { past: "pasado", words: "palabras" };
+
+function unitFor(section) {
+  const id = TILE_UNITS[section];
+  return id ? allUnits().find((unit) => unit.id === id) ?? null : null;
+}
+
+/** The units the path itself draws — everything not behind a tile. */
+function pathUnits() {
+  const behind = new Set(Object.values(TILE_UNITS));
+  return allUnits().filter((unit) => !behind.has(unit.id));
+}
+
 function allUnits() {
   return [...COURSE, ownUnit(), aboutUnit()].filter(Boolean);
 }
@@ -767,7 +827,13 @@ function firstOpenLesson() {
   return LESSONS.map((l) => l.id).find((id) => !progress.isDone(id)) ?? null;
 }
 
-function renderPath() {
+/* The home screen, and the two tiles that are the same path filtered.
+
+   `section` null is home: the wordmark, the four tiles, then the everyday
+   path. `section` "past" or "words" is one unit drawn on its own, by this same
+   function — deliberately not a second renderer, because a copy would drift
+   and the first thing to drift would be the node states. */
+function renderPath(section = null) {
   const streak = progress.currentStreak();
   const owed = progress.owedToday();
   const doneCount = LESSONS.filter((l) => progress.isDone(l.id)).length;
@@ -787,7 +853,7 @@ function renderPath() {
   const offsets = [0, -1, 1];
   let nodeIndex = 0;
 
-  const units = allUnits()
+  const units = (section ? [unitFor(section)].filter(Boolean) : pathUnits())
     .map((unit) => {
       /* Sobre mí leads with a node that isn't a lesson. Every other node on
          the path drills; this one opens the interview, because the interview
@@ -840,21 +906,42 @@ function renderPath() {
     })
     .join("");
 
-  view.innerHTML = `
-    <header class="home-head">
-      <div class="wordmark">mum·o·lingo</div>
-      <button class="streak ${streak > 0 ? "lit" : ""}" id="streak" aria-label="Streak">
-        ${flameSVG()}<span>${streak}</span>
-      </button>
-    </header>
+  const unit = section ? unitFor(section) : null;
 
-    <div class="mascot-card">
-      ${parrotSVG(74)}
-      <div class="bubble">${esc(greeting)}</div>
-    </div>
+  view.innerHTML = `
+    ${
+      section
+        ? `<header class="home-head section-head">
+             <div class="wordmark">${esc(unit?.title ?? "")}</div>
+             ${homeLink()}
+           </header>`
+        : `<header class="home-head">
+             <div class="brand">${parrotSVG(34)}<span class="wordmark">mum·o·lingo</span></div>
+             <div class="head-controls">
+               <button class="streak ${streak > 0 ? "lit" : ""}" id="streak" aria-label="Streak">
+                 ${flameSVG()}<span>${streak}</span>
+               </button>
+               <button class="head-gear" data-open-settings aria-label="Settings">${COG_SVG}</button>
+             </div>
+           </header>`
+    }
+
+    ${
+      section
+        ? unit?.subtitle
+          ? `<p class="muted section-intro">${esc(unit.subtitle)}</p>`
+          : ""
+        : `<div class="mascot-card">
+             ${parrotSVG(74)}
+             <div class="bubble">${esc(greeting)}</div>
+           </div>
+
+           ${tiles()}`
+    }
 
     ${units}
 
+    ${section ? "" : `
     <section class="unit">
       <div class="unit-banner mix-banner" style="--unit:var(--blue);--unit-dark:var(--blue-dark)">
         <div class="unit-name">Mézclalo</div>
@@ -880,10 +967,19 @@ function renderPath() {
             : ""
         }
       </div>
-    </section>
+    </section>`}
 
-    ${settings.hasAzure ? "" : `<div class="notice" style="margin-top:8px">Without an Azure key you can listen with the
-      browser's voice, but the waveform comparison and scoring won't run. Add the key in Settings.</div>`}`;
+    ${section || settings.hasAzure ? "" : `<div class="notice" style="margin-top:8px">Without an Azure key you can listen with the
+      browser's voice, but the waveform comparison and scoring won't run.
+      <button class="link" data-open-settings>Add the key in Settings</button></div>`}`;
+
+  view.querySelectorAll("[data-section]").forEach((button) =>
+    button.addEventListener("click", () => {
+      stopEverything();
+      state.section = button.dataset.section;
+      render();
+    })
+  );
 
   view.querySelectorAll("[data-lesson]").forEach((button) =>
     button.addEventListener("click", () => {
@@ -898,18 +994,63 @@ function renderPath() {
     render();
   });
 
-  document.getElementById("practice").onclick = () => startPractice();
+  const practice = document.getElementById("practice");
+  if (practice) practice.onclick = () => startPractice();
 
   document.getElementById("starred")?.addEventListener("click", () =>
     startPractice(shuffle([...favourites]))
   );
 
-  document.getElementById("streak").onclick = () =>
+  document.getElementById("streak")?.addEventListener("click", () =>
     toast(
       streak > 0
         ? `${streak} day${streak === 1 ? "" : "s"} in a row. One lesson a day keeps it burning.`
         : "Finish a lesson to light the flame."
-    );
+    )
+  );
+
+  /* The four ways in. Counted from the course rather than hardcoded, so a tile
+     says how much is behind it and Quick says whether it has ever been used.
+
+     Phrases and Quick are pages; Past and Palabras are units taken off the
+     path — see TILE_UNITS. Add is not a tile, because adding is something you
+     do to a section rather than a place: the Phrases page carries it. */
+  function tiles() {
+    const count = (id) => {
+      const found = allUnits().find((u) => u.id === id);
+      return found ? found.lessons.reduce((n, l) => n + l.phrases.length, 0) : 0;
+    };
+    const asked = library.ownPhrases().filter((p) => p.deck === QUICK_DECK && p.text.trim()).length;
+    const rows = [
+      { key: "phrases", title: "Phrases", blurb: "Everything you can say", colour: "blue",
+        count: `${library.drillable().length} phrases`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg>` },
+      { key: "past", title: "Past", blurb: "Name the shape, then say it", colour: "gold",
+        count: `${count("pasado")} phrases`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
+      { key: "words", title: "Palabras", blurb: "A word, a sound, a picture", colour: "purple",
+        count: `${count("palabras")} words`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>` },
+      { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
+        count: asked ? `${asked} asked for` : "Ask for one",
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>` },
+    ].filter((tile) => !TILE_UNITS[tile.key] || count(TILE_UNITS[tile.key]));
+
+    return `
+      <div class="tiles">
+        ${rows
+          .map(
+            (tile) => `
+          <button class="tile tile-${tile.colour}" data-section="${tile.key}">
+            <span class="tile-mark" aria-hidden="true">${tile.mark}</span>
+            <span class="tile-title">${esc(tile.title)}</span>
+            <span class="tile-blurb">${esc(tile.blurb)}</span>
+            <span class="tile-count">${esc(tile.count)}</span>
+          </button>`
+          )
+          .join("")}
+      </div>`;
+  }
 }
 
 // ---------------------------------------------------------------- sobre mí
@@ -2331,14 +2472,183 @@ function drawContour(ctx, contour, width, y, colour) {
 
 // ----------------------------------------------------------------- phrases
 
+/* Quick — the phrase you need in the next thirty seconds.
+
+   Everything else here is practice arranged in advance: a lesson somebody
+   wrote, a card you typed in when you had time. This is the other direction.
+   You are outside a pharmacy, you do not know how to ask for your medicine,
+   and you have about as long as it takes to open the door. One box, one
+   button, the phrase, and a Listen you can hit twice on the way in.
+
+   Ported from Xerra. It writes an ordinary card into an ordinary deck —
+   QUICK_DECK is a name and nothing more, so what Quick collects drills, stars,
+   scores, exports and deletes like anything else. It is saved as it arrives
+   rather than on a "keep it" tap, because the failure this guards against is
+   the phrase scrolling away while you are talking. "Don't keep it" is the
+   undo, and it is one tap. */
+function renderQuick() {
+  view.innerHTML = `
+    <header class="home-head section-head">
+      <div class="wordmark">Quick</div>
+      ${homeLink()}
+    </header>
+    <p class="muted section-intro">One phrase, right now.</p>
+    ${
+      settings.hasAssistant
+        ? `<div class="card">
+             <label class="field"><span>What do you need to say, and where?</span>
+               <textarea id="quick-ask" lang="en-GB" rows="2"></textarea></label>
+             <button class="btn btn-primary" id="quick-go" style="width:100%">Get the phrase</button>
+             <div class="notice bad" id="quick-error" hidden></div>
+           </div>`
+        : `<div class="notice">Quick needs the card builder. Set it up in Settings and this becomes one box
+             you can ask for a phrase from.</div>`
+    }
+    <div id="quick-answer"></div>
+    <div id="quick-recent"></div>`;
+
+  document.getElementById("quick-go")?.addEventListener("click", ask);
+  paintAnswer();
+  paintRecent();
+
+  /* Painted in place rather than through render(), for the reason the drill
+     repaints its own star: a re-render here would throw away what you are
+     looking at. */
+  function paintAnswer() {
+    const box = document.getElementById("quick-answer");
+    /* Looked up again rather than trusted: the card can be deleted from its own
+       phrase sheet while `state.quick` goes on holding the object it was. */
+    const phrase = state.quick && library.phraseById(state.quick.id);
+    if (!phrase) {
+      box.innerHTML = "";
+      return;
+    }
+    box.innerHTML = `
+      <div class="card quick-card">
+        <p class="quick-phrase" lang="${esc(COURSE_LANGUAGE)}">${esc(phrase.text)}</p>
+        <p class="quick-english">${esc(phrase.translation)}</p>
+        <button class="btn btn-primary quick-listen" data-quick-say>Listen</button>
+        ${phrase.focusNote ? `<div class="focus-note"><strong>Tip</strong><span>${esc(phrase.focusNote)}</span></div>` : ""}
+        ${phrase.usageNote ? `<p class="small muted" style="margin:10px 0 0">${esc(phrase.usageNote)}</p>` : ""}
+        <p class="small muted quick-kept">Kept in your <b>${esc(QUICK_DECK)}</b> pile.</p>
+        <div class="btn-row">
+          <button class="btn" data-quick-drill>Practise it</button>
+          <button class="link btn-danger" data-quick-drop>Don't keep it</button>
+        </div>
+      </div>`;
+
+    const say = box.querySelector("[data-quick-say]");
+    say.addEventListener("click", () => sayAloud(say, phrase.text));
+    box.querySelector("[data-quick-drill]").addEventListener("click", () => {
+      const queue = library
+        .ownPhrases()
+        .filter((p) => p.deck === QUICK_DECK && p.text.trim());
+      const at = queue.findIndex((p) => p.id === phrase.id);
+      state.quick = null;
+      startPractice(at > 0 ? [...queue.slice(at), ...queue.slice(0, at)] : queue);
+    });
+    box.querySelector("[data-quick-drop]").addEventListener("click", async () => {
+      await library.removePhrase(phrase.id);
+      state.quick = null;
+      paintAnswer();
+      paintRecent();
+      toast("Thrown away.");
+    });
+  }
+
+  /* What you have asked for before, newest first — the answer to "what did I
+     need yesterday?" belongs on the page where you needed it. */
+  function paintRecent() {
+    const box = document.getElementById("quick-recent");
+    const recent = library
+      .ownPhrases()
+      .filter((p) => p.deck === QUICK_DECK && p.text.trim() && p.id !== state.quick?.id)
+      .slice(-8)
+      .reverse();
+    if (!recent.length) {
+      box.innerHTML = "";
+      return;
+    }
+    box.innerHTML = `
+      <div class="section-label">Asked for before</div>
+      <div class="rows">
+        ${recent
+          .map(
+            (phrase) => `
+              <div class="row">
+                <button class="row-open" data-quick-open="${esc(phrase.id)}">
+                  <span class="row-main">
+                    <span class="row-title">${esc(phrase.text)}</span>
+                    <span class="row-sub">${esc(phrase.translation)}</span>
+                  </span>
+                  <span class="chev">›</span>
+                </button>
+              </div>`
+          )
+          .join("")}
+      </div>`;
+    box.querySelectorAll("[data-quick-open]").forEach((button) =>
+      button.addEventListener("click", () => {
+        const phrase = library.phraseById(button.dataset.quickOpen);
+        if (phrase) showPhrase(phrase);
+      })
+    );
+  }
+
+  async function ask() {
+    const field = document.getElementById("quick-ask");
+    const line = field.value.trim();
+    const button = document.getElementById("quick-go");
+    const errorBox = document.getElementById("quick-error");
+    if (!line) {
+      field.focus();
+      return;
+    }
+    errorBox.hidden = true;
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner"></span> Asking\u2026`;
+    try {
+      const result = await cardAssistant.complete(
+        { target: "", english: "", situation: "", ask: line },
+        settings
+      );
+      if (state.section !== "quick") return;
+      if (!result.text?.trim()) throw new Error("Nothing came back. Try asking again.");
+      state.quick = library.addPhrase({
+        text: result.text,
+        translation: result.translation || line,
+        deck: QUICK_DECK,
+        situation: result.situation || null,
+        usageNote: result.usageNote || null,
+        focusNote: result.focusNote || null,
+      });
+      field.value = "";
+      autosize(field);
+      paintAnswer();
+      paintRecent();
+    } catch (error) {
+      if (state.section !== "quick") return;
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
+    } finally {
+      if (state.section === "quick") {
+        button.disabled = false;
+        button.textContent = "Get the phrase";
+      }
+    }
+  }
+}
+
 function renderPhrases() {
   const all = library.allPhrases();
   const captures = library.captures();
 
   view.innerHTML = `
+    <div class="page-back">${homeLink()}</div>
     <h1>Phrases</h1>
     <p class="muted list-intro">${all.length} card${all.length === 1 ? "" : "s"} — the whole course plus your own,
       all of it open.</p>
+    <button class="btn section-add" data-open-add>Add a card</button>
     <label class="field"><input type="search" id="search" placeholder="Search"></label>
     <div id="phrase-list"></div>`;
 
@@ -3003,6 +3313,7 @@ function renderAdd() {
      completeCard still needs Spanish or English, so this box on its own can't
      build a card. */
   view.innerHTML = `
+    <div class="page-back">${homeLink()}</div>
     <h1>Add a card</h1>
     <p class="muted add-intro">Start with the situation — it's what the rest of the card is built from.
       Then write whatever you remember, in Spanish or English, and Perico's clever cousin
@@ -3444,6 +3755,7 @@ function renderSettings() {
   const doneCount = LESSONS.filter((l) => progress.isDone(l.id)).length;
 
   view.innerHTML = `
+    <div class="page-back">${homeLink()}</div>
     <h1>Settings</h1>
 
     <div class="section-label">Card builder</div>

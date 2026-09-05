@@ -91,6 +91,65 @@ scripts it names. **Don't undo either one for "fewer requests."**
 
 ---
 
+## The home screen: a wordmark, four tiles, and the path
+
+The tab bar is gone. Four buttons for four things that were never peers —
+Learn was the home screen, Phrases and Add things you do occasionally, Settings
+rarer still. Ported from Xerra, where the same bar had the same problem.
+
+- **The header carries the brand and the two controls.** The parrot at 34px
+  beside the wordmark, then the streak and a cog. The big parrot stays in the
+  greeting card below: one is the logo, the other is the mascot talking to you.
+- **The cog is a toothed cog, not the spoked circle the tab bar used**, and it
+  sits on a tinted disc. Under the word *Settings* the old mark read fine;
+  alone on a header it reads as a brightness icon, and on Xerra it was reported
+  as simply not being findable. Fixed there first, ported already fixed.
+- **Every page below home prints `homeLink()`** — *‹ Home* — behind one
+  delegated listener on `view`, so a page only has to print the link.
+
+### El pasado and Palabras came off the path
+
+`TILE_UNITS` is the whole of it: those two units are reached through a tile
+instead of the path.
+
+- **They were never "next".** One is a grammar drill, the other a vocabulary
+  pile you dip into — neither is a thing you work through in order. Strung out
+  along the winding path they buried the everyday lessons under twenty more
+  nodes, so the path stopped reading as progress.
+- **They are still ordinary units.** Same shape, same lessons, same progress
+  ticks, drawn by the same `renderPath` — `section` simply filters which units
+  it draws. **There is deliberately no second renderer**: a copy would drift,
+  and the first thing to drift would be the node states.
+- **`pathUnits()` and `unitFor(section)` answer two different questions.** The
+  first is what the path draws, the second is what one tile opens. Mixing them
+  up is how a unit ends up in both places or neither.
+- **A tile whose unit is empty is not shown.** `tiles()` filters on the count,
+  so a fork without one of these units gets three tiles rather than a dead
+  square.
+
+### Quick, and where its cards live
+
+Ported from Xerra. One box, one button, the phrase, and a Listen you can hit
+twice on the way in — for the moment you are outside a pharmacy and have about
+as long as it takes to open the door.
+
+- **`QUICK_DECK` is a deck name and nothing more**, exactly like `ABOUT_DECK`,
+  and it buys the same one thing: somewhere of its own to be listed.
+- **`ownUnit` skips both `ABOUT_DECK` and `QUICK_DECK`.** Without that, a Quick
+  card would appear twice — behind its tile and again on the path under *Lo
+  tuyo*. That filter is the load-bearing line here.
+- **The card is saved as it arrives**, not on a "keep it" tap: the failure this
+  guards against is the phrase scrolling away while you are talking. *Don't
+  keep it* is the undo, and it is one tap.
+- **No Worker change.** It calls the same `/complete-card` the Add page does.
+
+### Adding is something you do to a section
+
+The Phrases page carries *Add a card*; there is no Add destination of its own
+any more. Palabras and El pasado offer nothing to add, because in this fork they
+are course content — unlike Xerra, where Vocab is decks you can file into and
+therefore has an *Add a word*.
+
 ## Content model
 
 `content.js` exports `COURSE`: units → lessons → phrases. Rules:
