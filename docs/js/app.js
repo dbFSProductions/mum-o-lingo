@@ -195,14 +195,21 @@ function armDelete(button, armedLabel, onConfirm) {
    Rendered in three places (the Add review, the phrase sheet and under the
    drill) from the one function, so they read the same everywhere. Ported from
    Xerra with the same markup — keep the two in step. */
-function repliesBlock(replies, title = "You might hear back") {
+/* Each reply offers *Keep as a card*. A reply is a phrase somebody actually
+   says, and the one you keep hearing is the one you will want to be able to
+   say — so the way from "I like this one" to a card of its own is one tap,
+   here, rather than retyping it into Add. A reply already in the library says
+   *Kept ✓* instead, read off the library at render so it survives a re-render
+   and a second visit. Ported from Xerra. */
+function repliesBlock(replies, title = "You might hear back", keepable = true) {
   if (!replies?.length) return "";
   return `
     <div class="section-label">${esc(title)}</div>
     <ul class="replies">
       ${replies
-        .map(
-          (reply, i) => `
+        .map((reply, i) => {
+          const kept = keepable && replyKept(reply);
+          return `
         <li class="reply">
           <button class="reply-play" data-say="${i}" aria-label="Listen to this reply">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>
@@ -210,21 +217,73 @@ function repliesBlock(replies, title = "You might hear back") {
           <span class="reply-main">
             <span class="reply-text">${esc(reply.text)}</span>
             <span class="reply-translation">${esc(reply.translation)}</span>
+            ${
+              keepable
+                ? `<button class="link reply-keep" data-keep="${i}" ${kept ? "disabled" : ""}>${
+                    kept ? "Kept as a card ✓" : "Keep as a card"
+                  }</button>`
+                : ""
+            }
           </span>
-        </li>`
-        )
+        </li>`;
+        })
         .join("")}
     </ul>`;
+}
+
+function replyKept(reply) {
+  const key = normaliseSentence(reply.text ?? "");
+  return Boolean(key) && library.allPhrases().some((p) => normaliseSentence(p.text) === key);
+}
+
+/* One tap from a reply to a card of your own. The reply's text and English are
+   the card; the phrase it answers is written into the situation, because that
+   is exactly what a situation is for — where you would hear this. It lands
+   with your other cards, under Lo tuyo, whatever the card it answered was: a
+   reply to a Quick phrase is not a Quick phrase and a reply to a Sobre mí card
+   is not about you. No focusNote, because nobody has written one; the editor's
+   AI rebuild is there for that. Refuses a duplicate the way Add does, but says
+   so on the button rather than in a toast, since the button is what you were
+   looking at. */
+function keepReply(reply, source, button) {
+  const text = reply.text?.trim();
+  const translation = reply.translation?.trim();
+  if (!text || !translation) return;
+  const flip = () => {
+    button.disabled = true;
+    button.textContent = "Kept as a card ✓";
+  };
+  if (replyKept(reply)) {
+    flip();
+    toast("That one is already in your cards.");
+    return;
+  }
+  const said = source?.()?.text?.trim();
+  library.addPhrase({
+    text,
+    translation,
+    situation: said ? `Something you might hear after saying “${said}”.` : null,
+  });
+  flip();
+  toast("Added to your cards — it's on the path under Lo tuyo.");
 }
 
 /* The replies go through the same Azure voice and the same audio cache as the
    card itself — modelAudio keys on the text, so a reply heard once is there
    offline afterwards. No key, and the browser voice reads it instead. */
-function wireReplies(root, replies) {
+function wireReplies(root, replies, source = null) {
   root?.querySelectorAll("[data-say]").forEach((button) =>
     button.addEventListener("click", () => {
       const reply = replies[Number(button.dataset.say)];
       if (reply) sayAloud(button, reply.text, "Couldn't play that reply.");
+    })
+  );
+  /* `source` is read at the tap, not at wiring: on the Add review the phrase
+     box is still being edited. */
+  root?.querySelectorAll("[data-keep]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const reply = replies[Number(button.dataset.keep)];
+      if (reply) keepReply(reply, source, button);
     })
   );
 }
@@ -1818,7 +1877,7 @@ function renderDrill() {
 
   wirePicture(view, phrase);
 
-  wireReplies(view.querySelector(".drill-replies"), phrase.replies ?? []);
+  wireReplies(view.querySelector(".drill-replies"), phrase.replies ?? [], () => phrase);
 
   /* Fetching them mid-lesson. The card is repainted in place rather than
      through render(), which would take the attempt she is looking at off the
@@ -1843,7 +1902,7 @@ function renderDrill() {
         return;
       }
       card.innerHTML = repliesBlock(replies);
-      wireReplies(card, replies);
+      wireReplies(card, replies, () => phrase);
     } catch (error) {
       errorBox.className = "notice bad";
       errorBox.textContent = error.message;
@@ -3346,7 +3405,7 @@ function showPhrase(phrase) {
 
   wirePicture(sheetBody, phrase, { controls: true });
 
-  wireReplies(document.getElementById("p-replies"), phrase.replies ?? []);
+  wireReplies(document.getElementById("p-replies"), phrase.replies ?? [], () => phrase);
 
   document.getElementById("p-get-replies")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
@@ -3366,7 +3425,7 @@ function showPhrase(phrase) {
       }
       const section = document.getElementById("p-replies");
       section.innerHTML = repliesBlock(replies);
-      wireReplies(section, replies);
+      wireReplies(section, replies, () => phrase);
       button.remove();
     } catch (error) {
       errorBox.className = "notice bad";
@@ -4032,7 +4091,7 @@ function renderAdd() {
         current.innerHTML = replies.length
           ? repliesBlock(replies)
           : `<p class="tiny muted">Nothing much gets said back to this one.</p>`;
-        wireReplies(current, replies);
+        wireReplies(current, replies, () => ({ text: document.getElementById("add-target")?.value }));
       })
       .catch(() => {
         const current = document.getElementById("result-replies");
