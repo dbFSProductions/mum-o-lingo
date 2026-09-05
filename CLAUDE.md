@@ -131,6 +131,9 @@ greeting and six tiles, and nothing else — the path lives behind **Practice**.
   Settings. All Phrases still lists the cards under their own label, because
   that page is every card. Ported from Xerra, where the same row came out of
   Decks the same day.
+- **Sobre mí sits where The Past was, and The Past went down beside Phrases.**
+  The order is Practice, Words, Sobre mí, Quick, The Past, Phrases. Asked for
+  from the phone; the two you reach for most belong on the top two rows.
 - **Phrases is a square too, and that is what makes six.** It was `.tile-wide`,
   a button across the bottom on the argument that the whole library outranks a
   slice of it; five squares and a strip read worse than six squares, and the
@@ -532,6 +535,20 @@ of it; the half that strands you is the answer.
   level-two card is asking you to produce. So `drillReplies` stays out entirely
   while a question is standing, as well as while the meaning is hidden — and
   the *offer* sits behind the same gate as the replies it would fill in.
+- **Every reply offers *Keep as a card*.** A reply is a phrase somebody
+  actually says, and the one you keep hearing is the one you will want to be
+  able to say — so the way from "I like this one" to a card of your own is one
+  tap, on the reply, rather than retyping it into Add. `keepReply` in app.js is
+  the whole of it: the reply's text and English become the card, the phrase it
+  answers is written into the situation (that is exactly what a situation is
+  for), no focusNote because nobody has written one — the editor's AI rebuild
+  is there for that. It lands with your other cards under Lo tuyo whatever the
+  card it answered was: a reply to a Quick phrase is not a Quick phrase, and a
+  reply to a Sobre mí card is not about you. *Kept as a card ✓* is read off
+  `allPhrases()` at render (`replyKept`), so it survives a re-render and a
+  reload, and a duplicate is refused on the button rather than in a toast.
+  `wireReplies` takes a `source` read at the tap, not at wiring, because on the
+  Add review the phrase box is still being edited. Ported from Xerra.
 - Replies play through `speech.modelAudio`, which keys its cache on the text,
   so a reply heard once is available offline like any phrase. `sayAloud` is the
   shared one-tap behaviour: stop whatever is playing, Azure audio if there's a
