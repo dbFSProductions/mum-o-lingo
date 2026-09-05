@@ -9,6 +9,7 @@
 
 import {
   library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK,
+  GENDERS, genderOf,
   attemptScore,
 } from "./store.js";
 import { COURSE, COURSE_LANGUAGE, LESSONS, lessonById } from "./content.js";
@@ -279,8 +280,58 @@ function pictureBlock(phrase, style = "") {
       <strong>Picture it</strong>
       ${sounds ? `<span class="picture-sounds">Sounds like &ldquo;${esc(sounds)}&rdquo;</span>` : ""}
       <span>${esc(phrase.picture)}</span>
+      ${genderCue(phrase)}
       <div class="picture-art" data-art="${esc(phrase.id)}"></div>
     </div>`;
+}
+
+/* The gender cue, in the words as well as in the drawing.
+
+   It is an instruction to the reader rather than a label on the card — "paint
+   the fork pink" is something you do to the scene you are already imagining,
+   where "feminine · pink" is a second thing to memorise beside it. The colour
+   is carried by a dot rather than by coloured lettering: neither --blue nor a
+   pink of the same weight clears 4.5:1 as small text, and the swatch is the
+   part you read at a glance anyway. */
+function genderCue(phrase) {
+  const gender = genderOf(phrase);
+  if (!gender) return "";
+  const { label, colour } = GENDERS[gender];
+  const thing = phrase.translation?.trim();
+  return `<span class="picture-gender">
+    <i class="gender-dot gender-${gender}"></i>
+    Paint ${thing ? `<b>${esc(thing)}</b>` : "it"} ${colour} in the scene —
+    <b>${esc(phrase.text)}</b> is ${label}.</span>`;
+}
+
+/* The one place a gender is stated rather than read.
+
+   Almost every card gets its colour from its own article, so the default option
+   says what the article gave and the field is there to be ignored. It earns its
+   place on the words the article gets wrong — *el agua*, which is feminine —
+   and on anything the app has no article to read.
+
+   Deliberately a plain field on the phrase like `sounds` and `picture`, not a
+   new kind of card: it saves, exports and imports with everything else. */
+function genderField(phrase) {
+  const chosen = phrase?.gender ?? "";
+  const derived = genderOf({ text: phrase?.text ?? "" });
+  const auto = derived
+    ? `From the article — ${GENDERS[derived].label}`
+    : "From the article — it doesn't say";
+  return `
+    <label class="field"><span>Gender (optional)</span>
+      <select id="f-gender">
+        <option value=""${chosen ? "" : " selected"}>${auto}</option>
+        ${Object.entries(GENDERS)
+          .map(
+            ([key, { label, colour }]) =>
+              `<option value="${key}"${chosen === key ? " selected" : ""}>${
+                label[0].toUpperCase() + label.slice(1)
+              } — ${colour}</option>`
+          )
+          .join("")}
+      </select></label>`;
 }
 
 /* The drawing of the scene, if there is one — and the offer to have Gemini make
@@ -316,18 +367,20 @@ async function wirePictureArt(root, phrase, { controls = false } = {}) {
   const slot = root?.querySelector?.(`[data-art="${CSS.escape(phrase.id)}"]`);
   if (!slot) return;
 
-  const paint = (blob) => {
+  const paint = (blob, error = "") => {
     if (!slot.isConnected) return;
     if (!pictureURLs.has(phrase.id)) pictureURLs.set(phrase.id, URL.createObjectURL(blob));
-    slot.innerHTML = `<img class="picture-image" alt="${esc(phrase.picture)}" src="${pictureURLs.get(phrase.id)}">${
-      controls
-        ? `<div class="picture-art-row">
-             <button class="link" data-redraw>Draw it again</button>
-             <button class="link btn-danger" data-undraw>Remove the drawing</button>
-           </div>`
-        : ""
-    }`;
-    slot.querySelector("[data-redraw]")?.addEventListener("click", () => draw());
+    slot.innerHTML = `<img class="picture-image" alt="${esc(phrase.picture)}" src="${pictureURLs.get(phrase.id)}">
+      ${
+        settings.hasAssistant || controls
+          ? `<div class="picture-art-row">
+               ${settings.hasAssistant ? `<button class="link" data-redraw>Draw it again</button>` : ""}
+               ${controls ? `<button class="link btn-danger" data-undraw>Remove the drawing</button>` : ""}
+             </div>`
+          : ""
+      }
+      ${error ? `<div class="notice bad picture-art-error">${esc(error)}</div>` : ""}`;
+    slot.querySelector("[data-redraw]")?.addEventListener("click", () => draw(blob));
     slot.querySelector("[data-undraw]")?.addEventListener("click", async () => {
       await audioStore.deletePicture(phrase.id);
       releasePicture(phrase.id);
@@ -344,7 +397,7 @@ async function wirePictureArt(root, phrase, { controls = false } = {}) {
     slot.querySelector(".picture-draw")?.addEventListener("click", () => draw());
   };
 
-  async function draw() {
+  async function draw(previous = null) {
     const button = slot.querySelector(".picture-draw");
     slot.innerHTML = `<p class="small muted picture-drawing"><span class="spinner"></span> Drawing it\u2026 this one takes a while.</p>`;
     try {
@@ -357,6 +410,10 @@ async function wirePictureArt(root, phrase, { controls = false } = {}) {
             translation: phrase.translation,
             sounds: phrase.sounds ?? "",
             picture: phrase.picture ?? "",
+            /* Blue or pink on the object the word names. Optional at the
+               Worker, so a card with no gender to draw sends "" and gets the
+               prompt it always got. */
+            gender: genderOf(phrase) ?? "",
           },
         },
         settings
@@ -372,6 +429,8 @@ async function wirePictureArt(root, phrase, { controls = false } = {}) {
       paint(blob);
     } catch (error) {
       if (!slot.isConnected) return;
+      // A redraw that failed still has the drawing it was replacing.
+      if (previous) return paint(previous, error.message);
       offer();
       const box = slot.querySelector(".picture-art-error");
       if (box) {
@@ -2335,6 +2394,7 @@ function editPhrase(phrase, onSaved = null) {
        <textarea id="f-picture" placeholder="One daft scene with the sound AND the meaning in it">${esc(
          phrase?.picture ?? ""
        )}</textarea></label>
+     ${genderField(phrase)}
      ${
        settings.hasAssistant
          ? `<button class="btn" id="f-picture-ai" style="width:100%;margin-bottom:10px">Invent a picture for me</button>`
@@ -2389,6 +2449,7 @@ function editPhrase(phrase, onSaved = null) {
       focusNote: document.getElementById("f-note").value.trim() || null,
       sounds: document.getElementById("f-sounds").value.trim() || null,
       picture: document.getElementById("f-picture").value.trim() || null,
+      gender: document.getElementById("f-gender").value || null,
     };
     if (phrase) {
       library.updatePhrase({ ...phrase, ...data });
