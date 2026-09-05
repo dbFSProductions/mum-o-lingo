@@ -194,6 +194,33 @@ now validates the payload **the way the Worker does**, and the test fails 9 of
 - A screenshot proves it can be found.
 - Only exercising it proves it does anything.
 
+### Add a word, and where your own words live
+
+The Words section was read-only: Palabras is course content in `content.js`, so
+there was no way to add one at all. Now it carries **Add a word**, and what you
+add lands in `WORDS_DECK` — an ordinary deck name like `ABOUT_DECK` and
+`QUICK_DECK`, buying the same one thing: somewhere of its own to be listed.
+
+- **`unitsFor(section)` returns a list, and Words is why.** That section draws
+  the course unit and then **Your words** underneath it, so a word you added is
+  where you would go looking for it rather than filed under *Lo tuyo* with your
+  phrases. Every other section is one unit; this returns a list so that stays
+  true without a special case downstream.
+- **`ownUnit` now skips three decks** — Sobre mí, Quick and Words. Each has
+  somewhere of its own, and a card in two places is the bug this prevents.
+
+**One side is enough.** You have heard a word and don't know what it means, or
+you know the meaning and want the word — whichever you have is enough to start,
+and *Fill in the rest for me* does the other side, the gender, the sound bridge
+and the scene in one press. Two calls in order: `/complete-card` for the missing
+side, then `/chat` for the picture, built from the **completed** word. A picture
+you wrote yourself is never overwritten — only `sounds` is taken then. The
+gender needs no call at all: it is read off the article, which is why the
+completion dispatches an `input` event rather than only setting `.value`.
+
+Ported from Xerra, where the same screen keeps a deck field because its Vocab
+is decks you can file into. Here there is one pile, so the field goes.
+
 ### Adding is something you do to a section
 
 The Phrases page carries *Add a card*; there is no Add destination of its own
