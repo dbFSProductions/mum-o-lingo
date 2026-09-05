@@ -91,7 +91,7 @@ scripts it names. **Don't undo either one for "fewer requests."**
 
 ---
 
-## The home screen: a wordmark, four tiles, and the path
+## The home screen: a wordmark, six tiles, and the path
 
 The tab bar is gone. Four buttons for four things that were never peers —
 Learn was the home screen, Phrases and Add things you do occasionally, Settings
@@ -107,21 +107,34 @@ rarer still. Ported from Xerra, where the same bar had the same problem.
 - **Every page below home prints `homeLink()`** — *‹ Home* — behind one
   delegated listener on `view`, so a page only has to print the link.
 
-### Home is four tiles and a button; the path is one tap in
+### Home is six tiles; the path is one tap in
 
 The first cut put the tiles *above* the path, so the home screen was still the
 winding course with four squares on top of it. Now home is the header, the
-greeting, the four tiles and the Phrases button, and nothing else — the path
-lives behind **Practice**.
+greeting and six tiles, and nothing else — the path lives behind **Practice**.
 
 - **`PRACTICE` is a section like the others**, not a special case of "no
   section". Three places test for it, which is why it is a named constant: a
   typo in any of them draws an empty path rather than erroring.
-- **The Phrases button is a tile turned on its side.** `.tile-wide` is the same
-  idiom in one row across the bottom, where the first unit banner used to be.
-  It gets the full width because it is the whole library rather than one slice
-  of it — Practice, Past and Words are each a quarter of the grid because each
-  is a part.
+- **Sobre mí is a square, not a unit on the path.** It was a unit led by a
+  workshop node that opened the interview — and buried under Mézclalo it was
+  the last thing on the longest page, for a deck that is not a lesson you work
+  through any more than the past tense is. So the tile does what the node did:
+  it opens the interview page, which lists the cards. `pathUnits` leaves
+  `ABOUT_UNIT_ID` out alongside `TILE_UNITS`; `allUnits` keeps it, so Repaso's
+  pool and `findLesson` still see the cards. It is the one tile carrying
+  `data-about` rather than `data-section`, because it opens a page and not a
+  path, and it is green — the one strong colour the other five don't use.
+  **It is always shown**, unlike the unit, which stayed away with no assistant
+  and no cards: a tile that comes and goes leaves a hole in a grid, so the
+  tile says *Needs the card builder* instead and the page it opens links to
+  Settings. All Phrases still lists the cards under their own label, because
+  that page is every card. Ported from Xerra, where the same row came out of
+  Decks the same day.
+- **Phrases is a square too, and that is what makes six.** It was `.tile-wide`,
+  a button across the bottom on the argument that the whole library outranks a
+  slice of it; five squares and a strip read worse than six squares, and the
+  argument was never strong. `.tile-wide` is gone with it.
 - **`SECTION_TITLES` is what a section is called on the way in, and it is
   deliberately not the unit's own title.** The Palabras unit is still called
   Palabras in `content.js`; **Words** is what the tile says and what the page
@@ -679,12 +692,11 @@ and they are the answer to "AI-generated content from life context".
   is a name they carry in `deck` and nothing more; the one thing it buys is a
   unit of their own on the path. Resist giving them a flag — the moment they
   are a special *kind* of phrase, every list in the app has to learn about them.
-- **The workshop node breaks a rule on purpose.** Every other node on the path
-  drills; this one opens the interview, because the interview is the only way
-  cards get into the unit. It is also the only node that shows *before its unit
-  has anything in it* — "the first time you open it, it asks about you" needs
-  something to open. With no card assistant configured the whole unit stays
-  away, since it could never hold anything.
+- **The tile breaks a rule on purpose.** Every other tile opens a list or a
+  path; this one opens the interview, because the interview is the only way
+  cards get into the unit, and the page lists the cards. It was a workshop
+  node at the head of a unit on the path before it was a square on the home
+  screen — see *Home is six tiles* above for why it moved.
 - **Two endpoints, not one, and for the established reason.** `/interview` asks
   the next question, `/about-cards` turns the transcript into a batch of them.
   Writing a batch is the big slow call and asking one question is not, so they
@@ -1301,12 +1313,15 @@ and flips to `Kept on the card ✓`, `Forget this` on the sheet removes it, and
 the posted `card.replies` carries whatever is on screen — from the sheet, from
 the lesson, and from the Add tab once `askForReplies` has landed — with an
 empty list for a card that has none.
-For Sobre mí: `#about-open` is on the path before the unit has cards and the
-whole unit is absent with no assistant configured, opening it fires exactly one
+For Sobre mí: `[data-about]` is a home tile before the unit has cards and is
+still there with no assistant configured, reading *Needs the card builder* and
+opening a page that links to Settings; there is no `#about-open` and no
+`[data-lesson^="about-"]` on the path, seeded or not; home has six `.tile`s and
+no `.tile-wide`; with an assistant, opening the tile fires exactly one
 `/interview` by itself, `#about-make` is disabled until a learner turn exists,
 a batch containing a punctuation-only repeat adds one fewer than it returned,
-the made cards are ordinary phrases with `deck === "Sobre mí"` that appear as
-`[data-lesson^="about-"]` on the path, the transcript survives a reload without
+the made cards are ordinary phrases with `deck === "Sobre mí"` that the Sobre mí
+page lists and All Phrases lists too, the transcript survives a reload without
 a second `/interview`, and `#about-reset` takes two taps and leaves the cards
 alone. For the version panel: `#s-running` and `#s-installed` agree after a
 clean install. Two smoke scripts covering all of that live in the session
@@ -1456,8 +1471,8 @@ Nothing is waiting to be ported now. What's left is deliberate:
   "fix" one into the other without deciding which.
 - **Deck list versus path.** Xerra browses by deck with an accordion and a
   merged search page; here everything hangs off the path plus a flat Phrases
-  list. Sobre mí is the visible consequence: a deck row there, a unit with a
-  workshop node here.
+  list. Sobre mí is a home tile in both now; behind it, its cards are a deck
+  there and `ownPhrases` in a named deck here.
 - **The content.** All three courses now differ on purpose. Xerra teaches
   Catalan. Deb-o-lingo teaches Castilian to an American speaker, around her
   week: the doorman, coffee, tapas, *para llevar*. This one teaches Castilian
