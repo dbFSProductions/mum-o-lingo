@@ -10,7 +10,7 @@
 import {
   library, settings, progress, audioStore, aboutMe, VOICES, uid, RECALL_AFTER, ABOUT_DECK,
   GENDERS, genderOf,
-  attemptScore,
+  attemptScore, ASPECTS, aspectOf, aspectChoices,
 } from "./store.js";
 import { COURSE, COURSE_LANGUAGE, LESSONS, lessonById } from "./content.js";
 import { Recorder, Player, analyse, relativeSemitones, resample } from "./audio.js";
@@ -57,6 +57,10 @@ const state = {
      it — and only ever true because she asked for it: at level two the picture
      is the hint, offered instead of the answer. */
   pictured: false,
+
+  /* Dot or line: which shape she picked for this card, or null while the
+     question is still standing. Per card — loadPhrase resets it. */
+  aspectChoice: null,
   revealed: true,
   peeked: false,
   loadingModel: false,
@@ -279,9 +283,10 @@ function pictureBlock(phrase, style = "") {
     <div class="picture-note"${style ? ` style="${style}"` : ""}>
       <strong>Picture it</strong>
       ${sounds ? `<span class="picture-sounds">Sounds like &ldquo;${esc(sounds)}&rdquo;</span>` : ""}
-      <span>${esc(phrase.picture)}</span>
+      <span class="picture-scene-text">${esc(phrase.picture)}</span>
       ${genderCue(phrase)}
       <div class="picture-art" data-art="${esc(phrase.id)}"></div>
+      <div class="picture-scene" data-scene="${esc(phrase.id)}"></div>
     </div>`;
 }
 
@@ -444,6 +449,110 @@ async function wirePictureArt(root, phrase, { controls = false } = {}) {
   const existing = await audioStore.getPicture(phrase.id);
   if (existing) paint(existing);
   else offer();
+}
+
+/* "Imagine it again" — the scene's answer to the drawing's "Draw it again".
+
+   A redraw is for a picture that came out wrong; this is for one that was
+   never right. The scene is the mnemonic — the drawing is only a rendering of
+   it — so a bridge that doesn't click, or one built on a sound you don't hear
+   in the word, is the failure that actually costs you the word, and until now
+   the only way out of it was Edit, "Invent a picture for me", Save. That is
+   four taps and a screenful of small print away from the moment you notice,
+   which is mid-lesson with the card in front of you.
+
+   So it sits where a picture is shown — the drill and the phrase sheet, the
+   same two places the drawing's controls sit — and writes through
+   `library.setPicture`, which mutates the phrase because the lesson is holding
+   this decorated copy in `lesson.queue`. Nothing is confirmed first: a scene
+   you didn't ask for is undone in one tap.
+
+   The old scene is offered back rather than kept quietly, because what comes
+   back is one roll of a model and the one you had may well have been better —
+   and a course scene was written for one mouth and one life. One step back,
+   not a history: roll twice and the second undo would be putting back a scene
+   you had already rejected once.
+
+   The drawing is left alone and said to be stale. Deleting it would be
+   destroying something the user might still want, and silently keeping a
+   drawing of a scene that no longer exists is a lie — so it stays, with "Draw
+   it again" already sitting above this row as the way to catch it up.
+
+   It goes through `/chat`, like the editor's "Invent a picture for me" and for
+   the same reason: `/picture` draws a scene, it doesn't write one, and a new
+   endpoint means a Worker deploy that serves all three apps. */
+function wirePicture(root, phrase, options = {}) {
+  wirePictureArt(root, phrase, options);
+  wirePictureScene(root, phrase, options);
+}
+
+function wirePictureScene(root, phrase, options = {}) {
+  const { changedFrom = null } = options;
+  const slot = root?.querySelector?.(`[data-scene="${CSS.escape(phrase.id)}"]`);
+  if (!slot) return;
+  const note = slot.closest(".picture-note");
+
+  /* Both sides or nothing, on the editor's argument: the scene has to hold the
+     sound of the phrase and the English meaning at once, so half a card can't
+     make one. The offer is simply absent rather than refusing on tap. */
+  if (!settings.hasAssistant || !phrase.text?.trim() || !phrase.translation?.trim()) return;
+
+  /* The whole block is rebuilt, not just the sentence: a new bridge may arrive
+     where there was none, or none where there was one, and `pictureBlock` is
+     the one place that knows how those are laid out. Re-wiring the art with it
+     costs one read of IndexedDB and keeps the drawing's buttons alive. */
+  const repaint = (changed) => {
+    if (!note?.isConnected) return;
+    const holder = document.createElement("div");
+    holder.innerHTML = pictureBlock(phrase, note.getAttribute("style") ?? "");
+    note.innerHTML = holder.querySelector(".picture-note").innerHTML;
+    wirePicture(note, phrase, { ...options, changedFrom: changed });
+  };
+
+  /* The way back sits in the row rather than inside the sentence that announces
+     it, so that a second roll failing doesn't take it off the screen with the
+     message it was written into — the old scene is still there to go back to. */
+  const paint = (notice = "") => {
+    if (!slot.isConnected) return;
+    slot.innerHTML = `${notice}
+      <div class="picture-scene-row">
+        <button class="link" data-reimagine>Imagine it again</button>
+        ${changedFrom ? `<button class="link" data-unimagine>Put the old one back</button>` : ""}
+      </div>`;
+    slot.querySelector("[data-reimagine]")?.addEventListener("click", reimagine);
+    slot.querySelector("[data-unimagine]")?.addEventListener("click", () => {
+      library.setPicture(phrase, changedFrom);
+      repaint(null);
+    });
+  };
+
+  async function reimagine() {
+    const before = { sounds: phrase.sounds ?? "", picture: phrase.picture ?? "" };
+    // Read before the repaint, which empties the art slot and refills it async.
+    const hadDrawing = !!note?.querySelector(".picture-image");
+    slot.innerHTML = `<p class="small muted picture-drawing"><span class="spinner"></span> Imagining another one\u2026</p>`;
+    try {
+      const { reply } = await cardAssistant.chat(
+        { ...chatContext(phrase), history: [{ role: "user", text: reimagineRequest(phrase) }] },
+        settings
+      );
+      const made = parsePicture(reply);
+      if (!made.picture) throw new Error("Nothing came back. Try again.");
+      library.setPicture(phrase, made);
+      repaint({ ...before, hadDrawing });
+    } catch (error) {
+      // The card still says what it always said — only the offer failed.
+      paint(`<div class="notice bad picture-scene-note">${esc(error.message)}</div>`);
+    }
+  }
+
+  paint(
+    changedFrom
+      ? `<div class="notice picture-scene-note">A new scene.${
+          changedFrom.hadDrawing ? " The drawing is still of the old one — draw it again to catch it up." : ""
+        }</div>`
+      : ""
+  );
 }
 
 function base64ToBlob(data, mimeType) {
@@ -1214,6 +1323,7 @@ async function loadPhrase() {
   state.revealed = !state.recall;
   state.peeked = false;
   state.pictured = false;
+  state.aspectChoice = null;
   scoring.lastError = null;
   window.scrollTo(0, 0);
   if (!phrase) return render();
@@ -1263,6 +1373,37 @@ function renderDrill() {
   // withheld, because any of the three answers the question.
   const asking = state.recall && !state.revealed;
 
+  /* Dot or line: on a card that carries a shape, the lesson asks Mum to name
+     it before it will show her the sentence. The gate never shows Spanish, so
+     it stacks cleanly above level two — the card becomes whatever it was going
+     to be only after the shape is named. EDIT goes while the question stands
+     (the editor prints the sentence she is being asked to think about); the
+     quit and the bar stay. */
+  const shape = settings.aspectGate ? aspectOf(phrase) : null;
+  const gating = Boolean(shape) && !state.aspectChoice;
+
+  if (gating) {
+    view.innerHTML = `
+      <div class="lesson-top">
+        <button class="quit" id="quit" aria-label="Quit lesson">✕</button>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="link muted-link" style="visibility:hidden">EDIT</span>
+      </div>
+      ${aspectGateBody(phrase)}`;
+    document.getElementById("quit").onclick = quitLesson;
+    view.querySelectorAll("[data-aspect]").forEach((button) => {
+      button.onclick = () => {
+        /* Answering re-renders the whole drill, which is safe here in a way it
+           isn't after recording: the gate stands before any attempt exists, so
+           there is nothing on screen for a render() to throw away. */
+        state.aspectChoice = button.dataset.aspect;
+        render();
+      };
+    });
+    window.scrollTo(0, scrollY);
+    return;
+  }
+
   view.innerHTML = `
     <div class="lesson-top">
       <button class="quit" id="quit" aria-label="Quit lesson">✕</button>
@@ -1278,6 +1419,8 @@ function renderDrill() {
         : "Listen, then say it out loud"
     }</p>
 
+    ${aspectVerdict(shape, state.aspectChoice, asking)}
+
     <div class="card drill-card">
       ${state.recall ? `<div class="level-badge">Level 2 · from memory</div>` : ""}
       ${
@@ -1285,11 +1428,19 @@ function renderDrill() {
           ? `<p class="drill-text recall-prompt">${esc(phrase.translation)}</p>
              ${phrase.situation ? `<p class="drill-translation">${esc(phrase.situation)}</p>` : ""}
              <p class="tiny muted" style="margin:10px 0 0">Say it in Spanish, then you'll see it.</p>`
-          : `<p class="drill-text">${esc(phrase.text)}</p>
+          : `<p class="drill-text">${drillSpanish(phrase)}</p>
              ${
                state.showTranslation
                  ? `<p class="drill-translation">${esc(phrase.translation)}</p>`
                  : `<button class="link" id="reveal" style="padding-left:0">Show meaning</button>`
+             }
+             ${
+               /* The verb's dictionary form, said quietly — she should know
+                  what the -aba is hanging off. Behind showTranslation, since
+                  "to work" is half the meaning she asked to hide. */
+               phrase.infinitive && state.showTranslation
+                 ? `<p class="infinitive-line tiny muted">${esc(phrase.infinitive)}</p>`
+                 : ""
              }
              ${
                phrase.focusNote
@@ -1408,7 +1559,7 @@ function renderDrill() {
     advance({ skipped: false, score: state.attempt ? attemptScore(state.attempt) : null });
   });
 
-  wirePictureArt(view, phrase);
+  wirePicture(view, phrase);
 
   wireReplies(view.querySelector(".drill-replies"), phrase.replies ?? []);
 
@@ -1765,6 +1916,90 @@ function announceLevelUp(phrase) {
   if (state.recall || !settings.recallMode) return;
   if (library.goodAttempts(phrase.id) !== RECALL_AFTER) return;
   toast("¡Nivel 2! Next time you'll say this one from memory.", 3600);
+}
+
+/* The Spanish with its tense machinery lit up. `marked` on an El pasado card
+   is the text with the ending — or the auxiliary pair — in [brackets], and it
+   renders as a gold highlight on the drill card, so the -aba, the -é or the
+   `he ido` is seen on the verb itself rather than only read about in the
+   verdict. The brackets must reduce to the text exactly, or the plain text is
+   used instead — which is what keeps an edited card showing its edit (the
+   override changes `text`, not `marked`) and what makes a typo in the marks
+   cost only the highlight. */
+function drillSpanish(phrase) {
+  const marked = phrase.marked;
+  if (marked && marked.replace(/[\[\]]/g, "") === phrase.text) {
+    return esc(marked)
+      .replace(/\[/g, `<span class="ending-mark">`)
+      .replace(/\]/g, "</span>");
+  }
+  return esc(phrase.text);
+}
+
+/* Dot or line, asked before the sentence is on the screen. The card gives her
+   the English and the shapes are the whole of what she can do with it — no way
+   past the question except answering it, which is the point: the decision has
+   to happen before the words do, not after she has already read the ending.
+
+   The endings ride every choice button in bold and the verdict prints them in
+   big print, because ending ↔ shape is the association these lessons exist to
+   build — this is what's being drilled, not the phrases. The grammar-book term
+   stays small and italic underneath: on the screen every time, never the thing
+   she is asked for. */
+function aspectGateBody(phrase) {
+  const choices = aspectChoices(state.lesson?.queue);
+  /* Two buttons and the question names them both; the moment a lesson puts the
+     present perfect on the table, "Dot in a box, or line?" is literally the
+     wrong question — neither answer is on offer — so it widens. */
+  const question = choices.length > 2 ? "Which shape?" : "Dot in a box, or line?";
+  return `
+    <p class="instruction">${question}</p>
+
+    <div class="card drill-card">
+      <p class="drill-text recall-prompt">${esc(phrase.translation)}</p>
+      <p class="tiny muted" style="margin:10px 0 0">Decide the shape first. The Spanish comes after — with its ending.</p>
+    </div>
+
+    <div class="aspect-choices">
+      ${choices
+        .map((key) => [key, ASPECTS[key]])
+        .map(
+          ([key, aspect]) => `
+        <button class="aspect-choice" data-aspect="${key}">
+          <span class="aspect-mark">${aspect.mark}</span>
+          <span class="aspect-choice-body">
+            <strong>${esc(aspect.label)}</strong>
+            <span class="aspect-gloss">${esc(aspect.gloss)}</span>
+            <span class="aspect-endings">${esc(aspect.endings)}</span>
+            <span class="aspect-term">${esc(aspect.term)}</span>
+          </span>
+        </button>`
+        )
+        .join("")}
+    </div>`;
+}
+
+/* What she picked, what it was, and the ending in big print — directly above
+   the sentence, so the page reads shape first, then the words that have it.
+   The note is the one part that waits behind a level-two question: it explains
+   this particular sentence by quoting Spanish, often the very form she is
+   being asked to produce. It comes back the moment the card is revealed. */
+function aspectVerdict(shape, choice, asking) {
+  if (!shape || !choice) return "";
+  const right = choice === shape.key;
+  const picked = ASPECTS[choice];
+  const mine = picked?.label.toLowerCase() ?? "something else";
+  const theirs = shape.label.toLowerCase();
+  return `
+    <div class="card aspect-verdict ${right ? "right" : "wrong"}">
+      <span class="aspect-mark">${shape.mark}</span>
+      <span class="aspect-verdict-body">
+        <strong>${right ? `Yes — ${esc(theirs)}` : `Not quite — ${esc(theirs)}, not ${esc(mine)}`}</strong>
+        <span class="aspect-endings">${esc(shape.endings)}</span>
+        <span class="aspect-term">${esc(shape.term)}</span>
+        ${asking || !shape.note ? "" : `<span class="aspect-why">${esc(shape.note)}</span>`}
+      </span>
+    </div>`;
 }
 
 function renderComparison() {
@@ -2247,6 +2482,22 @@ function showPhrase(phrase) {
        }</span>
      </div>
      ${
+       /* The shape stated flat, with no gate and no verdict, even when the
+          drill's question is switched off: the sheet is where she looks a card
+          up rather than being tested on it. */
+       aspectOf(phrase)
+         ? `<div class="phrase-aspect">
+              <span class="aspect-mark">${aspectOf(phrase).mark}</span>
+              <span class="aspect-verdict-body">
+                <strong>${esc(aspectOf(phrase).label)}</strong>
+                <span class="aspect-endings">${esc(aspectOf(phrase).endings)}</span>
+                <span class="aspect-term">${esc(aspectOf(phrase).term)}${phrase.infinitive ? ` · ${esc(phrase.infinitive)}` : ""}</span>
+                ${aspectOf(phrase).note ? `<span class="aspect-why">${esc(aspectOf(phrase).note)}</span>` : ""}
+              </span>
+            </div>`
+         : ""
+     }
+     ${
        /* Stated flat, where she is looking a word up rather than being asked
           for it — so no hint button and no waiting for anything. */
        pictureBlock(phrase, "margin:12px 0 4px")
@@ -2347,7 +2598,7 @@ function showPhrase(phrase) {
   }
   paintNotes();
 
-  wirePictureArt(sheetBody, phrase, { controls: true });
+  wirePicture(sheetBody, phrase, { controls: true });
 
   wireReplies(document.getElementById("p-replies"), phrase.replies ?? []);
 
@@ -2421,7 +2672,9 @@ function editPhrase(phrase, onSaved = null) {
      ${genderField(phrase)}
      ${
        settings.hasAssistant
-         ? `<button class="btn" id="f-picture-ai" style="width:100%;margin-bottom:10px">Invent a picture for me</button>`
+         ? `<button class="btn" id="f-picture-ai" style="width:100%;margin-bottom:10px">${
+             phrase?.picture?.trim() ? "Imagine another one" : "Invent a picture for me"
+           }</button>`
          : ""
      }
      <div id="f-picture-note" class="notice" hidden></div>
@@ -2515,13 +2768,39 @@ function editPhrase(phrase, onSaved = null) {
    boxes, but a model that ignores the format costs only the split — the whole
    reply lands in Picture and she can cut it about. Nothing is saved until Save,
    as everywhere else in this editor. */
-const PICTURE_REQUEST = `Invent a keyword mnemonic for this card, for a beginner who speaks British English.
+const PICTURE_BRIEF = `Invent a keyword mnemonic for this card, for a beginner who speaks British English.
 
-Find English words or sounds hiding inside the Spanish, then build ONE absurd, vivid scene that contains both that sound and the English meaning, so that remembering the scene hands the word back. Strange, rude or violent is better than sensible. Never bridge to a sound the Spanish does not actually have — a picture that teaches the wrong pronunciation is worse than none.
+Find English words or sounds hiding inside the Spanish, then build ONE absurd, vivid scene that contains both that sound and the English meaning, so that remembering the scene hands the word back. Strange, rude or violent is better than sensible. Never bridge to a sound the Spanish does not actually have — a picture that teaches the wrong pronunciation is worse than none.`;
 
-Answer in exactly two lines, with nothing before or after them:
+const PICTURE_FORMAT = `Answer in exactly two lines, with nothing before or after them:
 SOUNDS LIKE: <the English sound bridge, a few words>
 PICTURE: <one sentence>`;
+
+const PICTURE_REQUEST = `${PICTURE_BRIEF}
+
+${PICTURE_FORMAT}`;
+
+/* The same brief with the rejected scene named in the middle of it, rather than
+   appended after the format lines — an instruction that arrives after "nothing
+   before or after them" is an instruction inviting a third line.
+
+   It is told what didn't work and asked for a different bridge *where the word
+   offers one*: on a word with only one honest English sound in it, insisting on
+   a new bridge is insisting on a wrong one, and this repo's rule is that a
+   mnemonic teaching the wrong mouth is worse than no mnemonic at all. */
+function reimagineRequest(phrase) {
+  return `${PICTURE_BRIEF}
+
+This card already has a mnemonic, and it did not stick for this learner:
+SOUNDS LIKE: ${phrase.sounds?.trim() || "(none)"}
+PICTURE: ${phrase.picture?.trim() || "(none)"}
+
+Write a different one. Build a different scene — do not restate the one above in
+other words. Use a different sound bridge if the word honestly offers one; if it
+does not, keep the bridge and hang a completely new scene off it.
+
+${PICTURE_FORMAT}`;
+}
 
 function parsePicture(reply) {
   const text = String(reply ?? "").trim();
@@ -2535,9 +2814,18 @@ function wirePictureAI() {
   if (!button) return;
   const noteBox = document.getElementById("f-picture-note");
 
+  let label = button.textContent;
+
   button.onclick = async () => {
     const text = document.getElementById("f-text").value.trim();
     const translation = document.getElementById("f-translation").value.trim();
+    /* Read out of the boxes rather than off the phrase, because the boxes are
+       what the card is about to become — a scene edited by hand and then sent
+       back is the one you want it not to hand you again. */
+    const scene = {
+      sounds: document.getElementById("f-sounds").value.trim(),
+      picture: document.getElementById("f-picture").value.trim(),
+    };
     // Both sides, and not for tidiness: the scene has to contain the sound of
     // the Spanish and the English meaning, so half a card can't produce one.
     if (!text || !translation) {
@@ -2559,7 +2847,7 @@ function wirePictureAI() {
             focusNote: document.getElementById("f-note").value.trim(),
             replies: [],
           }),
-          history: [{ role: "user", text: PICTURE_REQUEST }],
+          history: [{ role: "user", text: scene.picture ? reimagineRequest(scene) : PICTURE_REQUEST }],
         },
         settings
       );
@@ -2573,6 +2861,8 @@ function wirePictureAI() {
       pictureField.value = made.picture;
       autosize(soundsField);
       autosize(pictureField);
+      // There is a scene in the box now, so the next press is another one.
+      label = "Imagine another one";
       noteBox.className = "notice";
       noteBox.textContent = "Have a look — change anything that isn't yours, and it only counts once you Save.";
       noteBox.hidden = false;
@@ -2582,7 +2872,7 @@ function wirePictureAI() {
       noteBox.hidden = false;
     } finally {
       button.disabled = false;
-      button.textContent = "Invent a picture for me";
+      button.textContent = label;
     }
   };
 }
@@ -3204,6 +3494,14 @@ function renderSettings() {
       </div>
       <p class="tiny muted" style="margin:8px 0 0">Once you've said a card well ${RECALL_AFTER} times it stops
         showing you the Spanish — you get the English and have to remember it. There's a "Show me" if you're stuck.</p>
+      <div class="switch-row">
+        <span>Dot in a box, or line — name the shape first</span>
+        <input type="checkbox" id="s-aspect" ${settings.aspectGate ? "checked" : ""}>
+      </div>
+      <p class="tiny muted" style="margin:8px 0 0">On the El pasado lessons the drill shows you the English and asks
+        which shape the past is — a dot in a box (<em>-é, -ó</em>), a line (<em>-aba, -ía</em>), or a line reaching
+        now (<em>he + -ado</em>) — before it shows the Spanish. Cards outside those lessons never carry a shape, so
+        this does nothing to the rest of the course.</p>
     </div>
 
     <div class="section-label">Audio</div>
@@ -3255,6 +3553,11 @@ function renderSettings() {
 
   document.getElementById("s-translation").onchange = (event) => {
     settings.showTranslationUpFront = event.target.checked;
+    settings.save();
+  };
+
+  document.getElementById("s-aspect").onchange = (event) => {
+    settings.aspectGate = event.target.checked;
     settings.save();
   };
 
