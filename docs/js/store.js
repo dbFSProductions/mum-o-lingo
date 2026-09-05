@@ -424,6 +424,29 @@ export const library = {
     return list;
   },
 
+  /* A re-imagined keyword scene.
+
+     Ported from Xerra, where it takes an id and mutates the phrase in the
+     library. Here it takes the phrase *object* instead, because a course
+     phrase is code: `updatePhrase` already knows how to write one as an
+     override and a custom one in place, so the scene goes through it rather
+     than through a store of its own. Mutating the object matters for the same
+     reason it does over there — the lesson holds decorated copies in
+     `lesson.queue`, so the card you re-imagined would otherwise carry on
+     showing the scene it was rendered with.
+
+     It writes both halves together because they are one mnemonic — a new scene
+     hung off the old sound bridge is a riddle whose answer has moved. A blank
+     `sounds` is allowed and clears it; a blank `picture` is refused, since that
+     would leave the card with a bridge and nothing on the end of it. */
+  setPicture(phrase, { sounds, picture }) {
+    if (!phrase || !picture?.trim()) return null;
+    phrase.sounds = sounds?.trim() || null;
+    phrase.picture = picture.trim();
+    this.updatePhrase(phrase);
+    return phrase;
+  },
+
   repliesFor(phraseID) {
     return this.replies[phraseID] ?? [];
   },
