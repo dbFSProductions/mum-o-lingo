@@ -114,7 +114,10 @@ names ever change, they are in `saludos-2-2`, `saludos-2-3` and `cava-3-6`.
   append.
 - The **Palabras** cards carry `sounds` and `picture` — see *A word, a sound
   and one ridiculous picture* below. Both are editable fields, so they are
-  hers to rewrite and any card may have them, not only a Palabras word.
+  hers to rewrite and any card may have them, not only a Palabras word. A
+  third, `gender`, decides whether the picture paints that word's object blue
+  or pink; it is almost always read off the article instead and is written on a
+  card only where the article lies.
 - A lesson is ~5 phrases — one cup of tea. Keep them that size.
 - Every phrase has a `focusNote` written for a **British** English speaker
   learning **Castilian** Spanish — soft d's, silent h, b=v, the 'th' in
@@ -579,6 +582,52 @@ unit here that teaches single words rather than things you say.
   cached audio and gains the box. Drawings are not in the export, for the same
   reason recordings aren't: blobs stay on the device, and a restored backup
   offers to draw them again.
+- **Blue for masculine, pink for feminine, painted on the object the word
+  names.** Every mnemonic system that teaches gendered nouns bakes a fixed cue
+  into the scene — Linkword puts a boxer in every masculine one and perfume in
+  every feminine one, Fluent Forever puts the two genders in two different
+  rooms — and colour is the popular one. It is also the weakest of the three as
+  *prose*, because a colour is not an event; what rescues it here is that these
+  scenes get **drawn**, and a pink fork is legible in a thumbnail without
+  reading a word. One object is coloured, never the whole scene: a wash over
+  everything competes with the picture it is supposed to be marking.
+- **The gender is read off the card's own article**, so no course content had
+  to learn about it and a noun typed into the editor gets the cue for free.
+  `genderOf` in store.js is the one reader. It refuses to guess at anything
+  that isn't a noun phrase — *La cuenta, por favor* also starts with *la* — so
+  a sentence, a verb, an adverb or a question word is left alone rather than
+  mislabelled, which is most of this unit outside A la mesa and En la calle.
+- **`el agua` is the one Spanish word class the article lies about.** Feminine
+  nouns opening on a stressed a- take *el* in the singular — it is *el agua
+  fría* — so `EL_BUT_FEMININE` in store.js corrects the common ones and
+  `phrase.gender` overrides anything past them. This is what Xerra's `l'`
+  problem looks like over here: the word whose gender you cannot read off the
+  article in front of it. Deliberately a short list rather than a lexicon.
+- **`gender` had to be added to `EDITABLE`, and that is the fork-specific
+  half.** A course card's edits are stored as an override of the fields in that
+  list, and a field missing from it is dropped on save without a word — so the
+  editor's new select looked like it worked and changed nothing. Xerra has no
+  such list, its phrases being ordinary rows, so this is the one part of the
+  port that isn't a copy.
+- **The colour is carried by a swatch dot, not by the lettering.** Neither
+  `--blue` nor a pink of the same weight clears 4.5:1 as small text, and a cue
+  you have to decode from the shade of the type is a worse cue than one that
+  says *pink* out loud. The line reads as an instruction — *Paint the fork pink
+  in the scene* — because that is a thing you do to the scene you are already
+  imagining, where "feminine · pink" would be a second thing to memorise beside
+  it. `--pink` is new in the palette and Xerra has the same variable.
+- **The Worker needed no change**, because Xerra shipped the optional `gender`
+  paragraph in `buildPicturePrompt` with its own copy of this. Sending the
+  field is all this app had to do, and a card with no gender to draw sends `""`
+  and gets the prompt it always got.
+- **Draw it again is offered wherever a drawing is, the drill included.** What
+  comes back is one roll of a stochastic model and *that isn't it* is the
+  commonest thought on seeing it, so the redo belongs where you are looking at
+  the picture — which is mid-drill, not on the phrase sheet. The sheet keeps
+  **Remove the drawing**: throwing one away is tidying up, not trying again.
+  A failed redraw repaints the drawing you had rather than the offer — the blob
+  is still in the store, so showing *Draw this for me* would be a fright and a
+  lie at once.
 - **What comes back is shrunk before it is kept** — 512px, WebP where the
   browser will encode it. A full-size render per word would outweigh the rest
   of the app on a phone whose storage iOS is willing to evict.
@@ -881,7 +930,17 @@ it is pressed; one press paints `.picture-image` from a blob URL; a reload
 shows it again with no second call; the blob in the `pictures` store is an
 image and smaller than what was sent; the sheet's `[data-undraw]` takes it out
 of storage and puts the offer back; and a 503 lands in `.picture-art-error`
-with the offer still there. The Worker half now has a committed test rather
+with the offer still there. For the gender cue: `el tenedor` reads *Paint the
+fork blue* with a `.gender-dot.gender-m` and `la cuchara` reads *pink* with
+`.gender-f`; `genderOf` returns null for *La cuenta, por favor*, for `tener`,
+for `¿dónde?` and for `hoy`, and `f` for `el agua`, which is the assertion
+`EL_BUT_FEMININE` exists for; the drawn request carries `card.gender`;
+`#f-gender` opens on *From the article — masculine* and picking Feminine
+repaints the line **and survives the save**, which is the one that fails if
+`gender` is left out of `EDITABLE`. For the redraw: `[data-redraw]` is in the
+drill as well as the sheet and `[data-undraw]` only in the sheet, a 503 on a
+redraw leaves `.picture-image` on screen with the error beside it and the
+button still offered, and the next good one clears it. The Worker half now has a committed test rather
 than a scratchpad one — `worker/tools/picture-test.mjs` in Xerra's repo, which
 drives `worker.fetch` with `globalThis.fetch` stubbed and needs no key, no
 network and no money. It covers the Replicate request shape, both output

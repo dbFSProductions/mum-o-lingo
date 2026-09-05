@@ -44,6 +44,11 @@ const EDITABLE = [
      picture on a word inside a phrase she keeps losing. */
   "sounds",
   "picture",
+  /* And which colour that picture paints the object — see `genderOf` below.
+     A course card gets its gender from its own article and needs no override,
+     but a card whose article lies (`el agua` is feminine) does, and an override
+     that isn't in this list is dropped on save without a word. */
+  "gender",
 ];
 
 /* Cards the assistant writes about Mum's own life, from an English interview.
@@ -135,6 +140,62 @@ async function idbClear(store) {
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
   });
+}
+
+/* Blue for masculine, pink for feminine — the gender cue inside a keyword
+   picture.
+
+   Every mnemonic system that teaches gendered nouns bakes a fixed cue into the
+   scene: Linkword puts a boxer in every masculine one and perfume in every
+   feminine one, Fluent Forever puts the two genders in two different rooms.
+   Colour is the popular one and it is the weakest of the three as prose — a
+   colour is not an event. What rescues it here is that these scenes get
+   *drawn*: `picture` is a sentence and the drawing is made from that sentence,
+   so "the fork is pink" is a thing the image model can put on the screen and a
+   thing you can see in a thumbnail without reading a word.
+
+   What is coloured is the object the word names, never the whole scene. One
+   pink fork is a hook; a pink wash over everything competes with the picture it
+   is supposed to be marking.
+
+   The gender is read off the card's own article, so no course content had to
+   learn about it and a noun typed into the editor gets the cue for free.
+   `phrase.gender` overrides that where the article lies. Ported from Xerra,
+   whose table covers three languages; this one is Spanish. */
+export const GENDERS = {
+  m: { label: "masculine", colour: "blue" },
+  f: { label: "feminine", colour: "pink" },
+};
+
+const ARTICLE_GENDER = new Map([
+  ["el", "m"], ["los", "m"], ["un", "m"], ["unos", "m"],
+  ["la", "f"], ["las", "f"], ["una", "f"], ["unas", "f"],
+]);
+
+/* Feminine nouns that take `el` in the singular because they open on a stressed
+   a-: it is *el agua fría*, and a cue that painted the water blue would teach
+   the wrong agreement. This is the trap Spanish has where Catalan has `l'` —
+   the word whose gender you cannot read off the article in front of it.
+   Deliberately the common ones rather than a lexicon: the editor's own field is
+   the answer for anything past them. */
+const EL_BUT_FEMININE = new Set([
+  "agua", "alma", "ala", "arma", "aula", "área", "águila", "hacha", "hambre",
+]);
+
+/** "m", "f", or null for a card that isn't a gendered noun. */
+export function genderOf(phrase) {
+  if (phrase?.gender && GENDERS[phrase.gender]) return phrase.gender;
+  const text = (phrase?.text ?? "").trim();
+  /* Only a noun phrase is read for its article. "La cuenta, por favor" also
+     starts with "la", and a sentence is not a thing with a gender to paint — so
+     anything punctuated like a sentence, or longer than an article and a word
+     or two, is left alone rather than guessed at. An explicit `gender` above
+     overrides this, which is how a card can opt in regardless. */
+  const words = text.split(/\s+/);
+  if (words.length > 3 || /[.,;:!?¿¡]/.test(text)) return null;
+  const gender = ARTICLE_GENDER.get(words[0]?.toLowerCase());
+  if (gender === "m" && EL_BUT_FEMININE.has(words[1]?.toLowerCase())) return "f";
+  return gender || null;
 }
 
 export const audioStore = {
