@@ -59,6 +59,12 @@ const EDITABLE = [
    `deck` at all is a Lo tuyo card, which is every card that predates this. */
 export const ABOUT_DECK = "Sobre mí";
 
+/* Where a phrase asked for in the moment is filed. An ordinary deck name like
+   ABOUT_DECK, and it buys exactly the same one thing: a section of its own to
+   be listed in. `ownUnit` skips both, or a Quick card would appear twice — once
+   behind its tile and once on the path under "Lo tuyo". */
+export const QUICK_DECK = "Quick";
+
 /* Level two. A card is read aloud until it has been said well four times;
    after that the drill shows only the English and Mum has to produce the
    Spanish from memory. Trying to remember is the part that makes it stick —

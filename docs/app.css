@@ -46,7 +46,6 @@
   --line: #e5e5e5;
 
   --radius: 16px;
-  --tabbar-h: 74px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,13 +76,13 @@ html, body {
 
 body {
   min-height: 100dvh;
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  /* No tab bar to clear — just the home indicator. */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 18px);
 }
 
-/* During a lesson the tabbar hides; the result banner sits in flow now, so
+/* During a lesson the chrome is minimal; the result banner sits in flow, so
    only a little breathing room is needed at the bottom. */
 body.in-lesson { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
-body.in-lesson .tabbar { display: none; }
 
 .view {
   padding: max(env(safe-area-inset-top), 12px) 16px 24px;
@@ -434,62 +433,116 @@ button { font: inherit; }
    else. Needs to sit after .link, not before it. */
 .link.btn-danger { color: var(--red); }
 
-/* ----------------------------------------------------------------- tabbar */
+/* ------------------------------------------------------ home furniture */
 
-/* Four chunky coloured pills rather than grey glyphs — each tab owns a
-   colour, and the current one is the fully lit, raised one. */
+/* The tab bar is gone — four buttons for four things that were never peers.
+   Learn was the home screen, Phrases and Add things you do occasionally,
+   Settings rarer still. What replaces it is this header plus the tiles. */
 
-.tabbar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding: 8px 10px calc(env(safe-area-inset-bottom) + 10px);
-  display: flex;
-  gap: 8px;
-  background: var(--surface);
-  border-top: 2px solid var(--line);
-  z-index: 40;
-}
-.tab {
-  flex: 1;
-  background: var(--tab);
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.brand svg { flex: 0 0 auto; }
+.head-controls { display: flex; align-items: center; gap: 8px; }
+
+/* A toothed cog on a tinted disc. A bare glyph on its own reads as artwork —
+   the disc says "press me" before the icon has to say what it does. Reported
+   on Xerra as simply not being findable, and fixed there first. */
+.head-gear {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
   border: 0;
-  border-radius: 16px;
-  color: #fff;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.head-gear svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.head-gear:active { transform: translateY(2px); }
+
+/* A tile's own page: the unit name where the wordmark goes, and the way home
+   beside it. */
+.section-head .wordmark { font-size: 1.35rem; }
+.section-intro { margin: -4px 0 14px; }
+.page-back { margin: 0 0 10px; }
+.page-back .link { padding-left: 0; }
+
+/* "Add a card", under the list it adds to. */
+.section-add { width: 100%; margin: 0 0 16px; }
+
+/* The four ways in, as chunky coloured squares — the same idiom as the
+   buttons, with the solid darker slab underneath. White on these fills is the
+   accepted trade-off of this palette, the same one the buttons make. The blurb
+   and the count are held at 0.95 and 0.85 opacity rather than in a lighter
+   colour, so they stay as legible as the title relative to the ground they sit
+   on. */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.tile {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
   gap: 2px;
-  font-size: 0.66rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  min-height: 132px;
+  padding: 14px 14px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  color: #fff;
+  text-align: left;
+  font: inherit;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--tab-dark);
-  opacity: 0.8;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: transform 0.06s, box-shadow 0.06s;
 }
-.tab[data-tab="learn"] { --tab: var(--green); --tab-dark: var(--green-dark); }
-.tab[data-tab="phrases"] { --tab: var(--blue); --tab-dark: var(--blue-dark); }
-.tab[data-tab="add"] { --tab: var(--orange); --tab-dark: var(--orange-dark); }
-.tab[data-tab="settings"] { --tab: #b56bf2; --tab-dark: #9147cc; }
-.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.tab:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--tab-dark); }
-.tab[aria-current="true"] {
-  opacity: 1;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--tab-dark), inset 0 0 0 3px rgba(255, 255, 255, 0.92);
+.tile:active { transform: translateY(3px); box-shadow: none !important; }
+.tile-mark { display: block; margin-bottom: auto; }
+.tile-mark svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
 }
-.tab[aria-current="true"]:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--tab-dark), inset 0 0 0 3px rgba(255, 255, 255, 0.92);
-}
+.tile-title { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.01em; }
+.tile-blurb { font-size: 0.78rem; font-weight: 700; opacity: 0.95; line-height: 1.25; }
+.tile-count { font-size: 0.72rem; font-weight: 800; opacity: 0.85; margin-top: 4px; }
+.tile-blue { background: var(--blue); box-shadow: 0 4px 0 var(--blue-dark); }
+.tile-gold { background: var(--gold); box-shadow: 0 4px 0 var(--gold-dark); color: #4b4b4b; }
+.tile-purple { background: var(--purple); box-shadow: 0 4px 0 var(--purple-dark); }
+.tile-orange { background: var(--orange); box-shadow: 0 4px 0 var(--orange-dark); }
 
-@media (prefers-reduced-motion: reduce) {
-  .tab { transition: none; }
+/* Quick's answer. The phrase is the biggest thing on the page because it is
+   the only thing you came for, and Listen is full width under it — this is a
+   screen read at arm's length on the way through a door. */
+.quick-phrase {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
+.quick-english { margin: 0 0 14px; color: var(--text-2); font-weight: 700; }
+.quick-listen { width: 100%; }
+.quick-kept { margin: 12px 0 0; }
+.quick-card .btn-row { margin-top: 12px; }
+
+
 
 /* ------------------------------------------------------------------ drill */
 
@@ -884,7 +937,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px);
+  bottom: calc(env(safe-area-inset-bottom) + 22px);
   transform: translateX(-50%);
   background: var(--text);
   color: var(--bg);
