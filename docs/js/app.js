@@ -805,11 +805,11 @@ function ownUnit() {
   };
 }
 
-/* Sobre mí — cards the assistant wrote about Mum's own life. It is the one
-   unit that shows up before it has any lessons in it, because its first node
-   is not a lesson: it is the interview that fills it, and an empty invitation
-   has to be findable. With no card assistant configured there is nothing it
-   could ever hold, so it stays away entirely. */
+/* Sobre mí — cards the assistant wrote about Mum's own life. It is not on
+   the path any more: it has a square of its own on the home screen, which
+   opens the interview and lists the cards, so `pathUnits` leaves it out. It is
+   still a unit, because Repaso's pool and the lesson lookup read `allUnits`
+   and a card the interview wrote should still turn up in a mix. */
 function aboutUnit() {
   const phrases = library.ownPhrases().filter((p) => p.text.trim() && p.deck === ABOUT_DECK);
   if (!phrases.length && !settings.hasAssistant) return null;
@@ -820,9 +820,8 @@ function aboutUnit() {
     subtitle: phrases.length
       ? "Your own life, in Spanish"
       : "Tell it about you and it writes the cards",
-    color: "var(--orange)",
-    colorDark: "var(--orange-dark)",
-    workshop: true,
+    color: "var(--green)",
+    colorDark: "var(--green-dark)",
     lessons: chunkLessons(phrases, "about", "About you"),
   };
 }
@@ -889,9 +888,11 @@ function unitFor(section) {
   return id ? allUnits().find((unit) => unit.id === id) ?? null : null;
 }
 
-/** The units the path itself draws — everything not behind a tile. */
+/** The units the path itself draws — everything not behind a tile. Sobre mí
+    is behind one too, though not through TILE_UNITS: its tile opens the
+    interview page rather than a path. */
 function pathUnits() {
-  const behind = new Set(Object.values(TILE_UNITS));
+  const behind = new Set([...Object.values(TILE_UNITS), ABOUT_UNIT_ID]);
   return allUnits().filter((unit) => !behind.has(unit.id));
 }
 
@@ -942,21 +943,6 @@ function renderPath(section = null) {
 
   const units = (section ? unitsFor(section) : [])
     .map((unit) => {
-      /* Sobre mí leads with a node that isn't a lesson. Every other node on
-         the path drills; this one opens the interview, because the interview
-         is the only way cards get into this unit. It sits first, and it is
-         there before the unit has anything in it at all. */
-      const workshop = unit.workshop
-        ? `
-        <div class="node-slot" style="--offset:${offsets[nodeIndex++ % offsets.length]}">
-          <button class="node open" id="about-open"
-                  style="--node:${unit.color};--node-dark:${unit.colorDark}" aria-label="${esc(ABOUT_DECK)}">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
-          </button>
-          <div class="node-title">${unit.lessons.length ? "Tell it more" : "Tell it about you"}</div>
-        </div>`
-        : "";
-
       const nodes = unit.lessons
         .map((lesson) => {
           const done = progress.isDone(lesson.id);
@@ -988,7 +974,7 @@ function renderPath(section = null) {
           <div class="unit-name">${esc(unit.title)}</div>
           <div class="unit-sub">${esc(unit.subtitle)}</div>
         </div>
-        <div class="path">${workshop}${nodes}</div>
+        <div class="path">${nodes}</div>
       </section>`;
     })
     .join("");
@@ -1026,15 +1012,7 @@ function renderPath(section = null) {
              <div class="bubble">${esc(greeting)}</div>
            </div>
 
-           ${tiles()}
-
-           <button class="tile tile-wide tile-blue" data-section="phrases">
-             <span class="tile-mark" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg></span>
-             <span class="tile-wide-body">
-               <span class="tile-title">All Phrases</span>
-               <span class="tile-blurb">Every card, searchable — the course plus your own</span>
-             </span>
-           </button>`
+           ${tiles()}`
     }
 
     ${section === "words" && settings.hasAssistant ? `<button class="btn section-add" data-add-word>Add a word</button>` : ""}
@@ -1088,11 +1066,15 @@ function renderPath(section = null) {
     })
   );
 
-  document.getElementById("about-open")?.addEventListener("click", () => {
-    stopEverything();
-    state.stage = "about";
-    render();
-  });
+  /* The one tile that opens a page rather than a list: Sobre mí leads to the
+     interview that fills it, and its cards are listed there. */
+  view.querySelectorAll("[data-about]").forEach((button) =>
+    button.addEventListener("click", () => {
+      stopEverything();
+      state.stage = "about";
+      render();
+    })
+  );
 
   const practice = document.getElementById("practice");
   if (practice) practice.onclick = () => startPractice();
@@ -1109,13 +1091,30 @@ function renderPath(section = null) {
     )
   );
 
-  /* The four ways in. Counted from the course rather than hardcoded, so a tile
+  /* The six ways in. Counted from the course rather than hardcoded, so a tile
      says how much is behind it and Quick says whether it has ever been used.
 
-     Phrases and Quick are pages; Past and Palabras are units taken off the
-     path — see TILE_UNITS. Add is not a tile, because adding is something you
-     do to a section rather than a place: the Phrases page carries it. */
+     Phrases, Quick and Sobre mí are pages; Past and Palabras are units taken
+     off the path — see TILE_UNITS. Add is not a tile, because adding is
+     something you do to a section rather than a place: the Phrases page
+     carries it.
+
+     Sobre mí used to be a unit on the path, led by a workshop node that opened
+     the interview. A deck the app writes about you is not a lesson you work
+     through any more than the past tense is, and buried under Mézclalo it was
+     the last thing on the longest page. So it is a square now, and the square
+     does what the node did. Green, the one strong colour the other five don't
+     use; it is the only tile that carries `data-about` rather than
+     `data-section`, because it opens a page and not a path. It is always
+     shown — a tile that comes and goes leaves a hole in a grid — and with no
+     assistant it says so, and its page names Settings as the fix.
+
+     Phrases came in off the bottom row to make the sixth square. It was a
+     wide button across the foot of the grid, on the argument that the whole
+     library outranks a slice of it; five squares and a strip read worse than
+     six squares, and the argument was never strong. */
   function tiles() {
+    const about = library.ownPhrases().filter((p) => p.deck === ABOUT_DECK && p.text.trim()).length;
     const count = (id) => {
       const found = allUnits().find((u) => u.id === id);
       return found ? found.lessons.reduce((n, l) => n + l.phrases.length, 0) : 0;
@@ -1134,6 +1133,16 @@ function renderPath(section = null) {
       { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
         count: asked ? `${asked} asked for` : "Ask for one",
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>` },
+      { key: "about", title: ABOUT_DECK, blurb: "Cards written about you", colour: "green",
+        count: about
+          ? `${about} card${about === 1 ? "" : "s"} about you`
+          : settings.hasAssistant
+          ? "Tell it about you"
+          : "Needs the card builder",
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>` },
+      { key: "phrases", title: "All Phrases", blurb: "Every card, searchable", colour: "blue",
+        count: `${library.drillable().length} cards`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10"/></svg>` },
     ].filter((tile) => !TILE_UNITS[tile.key] || count(TILE_UNITS[tile.key]));
 
     return `
@@ -1141,7 +1150,9 @@ function renderPath(section = null) {
         ${rows
           .map(
             (tile) => `
-          <button class="tile tile-${tile.colour}" data-section="${tile.key}">
+          <button class="tile tile-${tile.colour}" ${
+            tile.key === "about" ? `data-about="1"` : `data-section="${tile.key}"`
+          }>
             <span class="tile-mark" aria-hidden="true">${tile.mark}</span>
             <span class="tile-title">${esc(tile.title)}</span>
             <span class="tile-blurb">${esc(tile.blurb)}</span>
@@ -1257,10 +1268,10 @@ function renderAbout() {
              ${cards.length ? "Make more cards from this" : "Create cards"}
            </button>
            <p class="tiny muted">Answer a few questions, then let it write the phrases. Come back and tell it
-           more whenever you like — they land on the path under ${esc(ABOUT_DECK)}.</p>`
+           more whenever you like — they're all here, behind the ${esc(ABOUT_DECK)} square.</p>`
         : `<div class="section-label">Heads up</div>
            <div class="notice">These cards are written by the card builder, so it needs its address and
-           passcode. Add them in Settings and come back.</div>`
+           passcode. <button class="link" data-open-settings>Add them in Settings</button> and come back.</div>`
     }`;
 
   document.getElementById("about-back").onclick = () => {
@@ -1442,7 +1453,7 @@ function renderAbout() {
          the one place the question occurs to you. */
       aboutMe.add(
         "assistant",
-        `I've written ${fresh.length} card${fresh.length === 1 ? "" : "s"} from that, and they're under ${ABOUT_DECK} on your path now. Tell me more whenever you like and I'll write some more.`
+        `I've written ${fresh.length} card${fresh.length === 1 ? "" : "s"} from that, and they're behind your ${ABOUT_DECK} square now. Tell me more whenever you like and I'll write some more.`
       );
       // The cards are saved above regardless; only the telling about it needs
       // the page to still be here.
