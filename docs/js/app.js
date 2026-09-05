@@ -1055,12 +1055,12 @@ function renderPath(section = null) {
       { key: PRACTICE, title: SECTION_TITLES[PRACTICE].title, blurb: SECTION_TITLES[PRACTICE].sub, colour: "blue",
         count: `${pathUnits().reduce((n, u) => n + u.lessons.reduce((m, l) => m + l.phrases.length, 0), 0)} phrases`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M6 10.5V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/></svg>` },
-      { key: "past", title: SECTION_TITLES.past.title, blurb: SECTION_TITLES.past.sub, colour: "gold",
-        count: `${count("pasado")} phrases`,
-        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
       { key: "words", title: SECTION_TITLES.words.title, blurb: SECTION_TITLES.words.sub, colour: "purple",
         count: `${count("palabras")} words`,
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>` },
+      { key: "past", title: SECTION_TITLES.past.title, blurb: SECTION_TITLES.past.sub, colour: "gold",
+        count: `${count("pasado")} phrases`,
+        mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16"/><circle cx="8" cy="17" r="2.5"/><path d="M13 17V7h6"/></svg>` },
       { key: "quick", title: "Quick", blurb: "A phrase you need right now", colour: "orange",
         count: asked ? `${asked} asked for` : "Ask for one",
         mark: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>` },
@@ -2137,7 +2137,7 @@ function aspectGateBody(phrase) {
         .map(
           ([key, aspect]) => `
         <button class="aspect-choice" data-aspect="${key}">
-          <span class="aspect-mark">${aspect.mark}</span>
+          <span class="aspect-mark shape-${key}">${aspect.mark}</span>
           <span class="aspect-choice-body">
             <strong>${esc(aspect.label)}</strong>
             <span class="aspect-gloss">${esc(aspect.gloss)}</span>
@@ -2163,7 +2163,7 @@ function aspectVerdict(shape, choice, asking) {
   const theirs = shape.label.toLowerCase();
   return `
     <div class="card aspect-verdict ${right ? "right" : "wrong"}">
-      <span class="aspect-mark">${shape.mark}</span>
+      <span class="aspect-mark shape-${shape.key}">${shape.mark}</span>
       <span class="aspect-verdict-body">
         <strong>${right ? `Yes — ${esc(theirs)}` : `Not quite — ${esc(theirs)}, not ${esc(mine)}`}</strong>
         <span class="aspect-endings">${esc(shape.endings)}</span>
@@ -2827,7 +2827,7 @@ function showPhrase(phrase) {
           up rather than being tested on it. */
        aspectOf(phrase)
          ? `<div class="phrase-aspect">
-              <span class="aspect-mark">${aspectOf(phrase).mark}</span>
+              <span class="aspect-mark shape-${aspectOf(phrase).key}">${aspectOf(phrase).mark}</span>
               <span class="aspect-verdict-body">
                 <strong>${esc(aspectOf(phrase).label)}</strong>
                 <span class="aspect-endings">${esc(aspectOf(phrase).endings)}</span>

@@ -175,6 +175,33 @@ any more. Palabras and El pasado offer nothing to add, because in this fork they
 are course content — unlike Xerra, where Vocab is decks you can file into and
 therefore has an *Add a word*.
 
+### The shapes are coloured; the choices still are not
+
+The gate was black and white until you answered — reported as looking broken
+or unfinished. **The reason it had no colour is still good**: a coloured
+*choice* reads as the recommended one, and the only colour on that screen was
+meant to arrive with the verdict.
+
+So the colour is on **the mark**, not on the button — one hue per shape, given
+to every choice at once. That is a legend rather than a recommendation, and it
+is the reason this doesn't undo the earlier decision.
+
+- **Dot is orange, line is blue, a line reaching now is purple**, and the same
+  colour follows the shape into the verdict and onto the phrase sheet, so the
+  picture and the colour get learned together.
+- **The tint behind the mark is mixed from `currentColor`**, so a new shape is
+  one `.shape-*` line and nothing else.
+- The phrase sheet's block already sits on a tint, so the mark keeps its colour
+  and drops the second background there.
+
+### The English was the half you had to hunt for
+
+`.drill-translation` was 1rem against the word's 1.55rem, and a full shade
+lighter. On a Words card — **Hoy** large, *today* small and grey underneath —
+the half you are actually trying to learn was the half you had to look for.
+Reported from the phone. It is 1.12rem and one step of weight up now, still
+quieter than the word but no longer hiding under it.
+
 ## Content model
 
 `content.js` exports `COURSE`: units → lessons → phrases. Rules:
