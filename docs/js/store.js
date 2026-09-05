@@ -242,9 +242,13 @@ async function idbClear(store) {
    learn about it and a noun typed into the editor gets the cue for free.
    `phrase.gender` overrides that where the article lies. Ported from Xerra,
    whose table covers three languages; this one is Spanish. */
+/* `article` is what the learner actually reaches for. "Masculine" is the
+   grammar word for it, and useful in the picture cue, but when you are filing a
+   word the question in your head is "el or la?" — so that is what the field
+   asks, with the colour it paints beside it. */
 export const GENDERS = {
-  m: { label: "masculine", colour: "blue" },
-  f: { label: "feminine", colour: "pink" },
+  m: { label: "masculine", colour: "blue", article: "el" },
+  f: { label: "feminine", colour: "pink", article: "la" },
 };
 
 const ARTICLE_GENDER = new Map([
