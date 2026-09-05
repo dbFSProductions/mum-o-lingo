@@ -2638,8 +2638,20 @@ function renderQuick() {
     button.disabled = true;
     button.innerHTML = `<span class="spinner"></span> Asking\u2026`;
     try {
+      /* deck, languageCode and languageName are required by the Worker's
+         validateDraft and are not optional here just because this fork has one
+         language and Quick has one deck — leaving them off returns 400 "Choose
+         a language and deck", which is how this shipped broken. */
       const result = await cardAssistant.complete(
-        { target: "", english: "", situation: "", ask: line },
+        {
+          target: "",
+          english: "",
+          situation: "",
+          ask: line,
+          deck: QUICK_DECK,
+          languageCode: COURSE_LANGUAGE,
+          languageName: "Spanish (Spain)",
+        },
         settings
       );
       if (state.section !== "quick") return;
