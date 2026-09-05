@@ -478,6 +478,10 @@ button { font: inherit; }
 .page-back .link { padding-left: 0; }
 
 /* "Add a card", under the list it adds to. */
+/* What the app made of the article, under the select. Feedback, not a fourth
+   thing to choose between — which is why it is not an <option>. */
+.gender-hint { margin: 6px 0 0; }
+
 .section-add { width: 100%; margin: 0 0 16px; }
 
 /* The four ways in, as chunky coloured squares — the same idiom as the
