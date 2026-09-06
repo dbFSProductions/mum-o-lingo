@@ -1278,12 +1278,11 @@ function renderAbout() {
   let armed = false;
 
   view.innerHTML = `
-    <div class="lesson-top">
-      <button class="quit" id="about-back" aria-label="Back to the path">✕</button>
-    </div>
-
-    <h1 class="about-head">${esc(ABOUT_DECK)}</h1>
-    <p class="muted about-lede">${
+    <header class="home-head section-head">
+      <div class="wordmark">${esc(ABOUT_DECK)}</div>
+      <button class="link" id="about-back">‹ Home</button>
+    </header>
+    <p class="muted section-intro">${
       cards.length
         ? `${cards.length} card${cards.length === 1 ? "" : "s"} written from what you've told it.`
         : "Answer a few questions in English and it'll write you cards about your own life."
@@ -1293,11 +1292,11 @@ function renderAbout() {
       cards.length
         ? `<button class="btn btn-primary btn-big" id="about-practise" style="width:100%">Practise these ${cards.length}</button>
            <div class="section-label">Your cards</div>
-           <div class="rows">
+           <div class="rows rows-spaced">
              ${cards
                .map(
                  (phrase) => `
-                   <div class="row">
+                   <div class="row striped" style="--hue:var(--green)">
                      ${starButton(phrase)}
                      <button class="row-open" data-phrase="${esc(phrase.id)}">
                        <span class="row-main">
@@ -3007,7 +3006,7 @@ function renderQuick() {
       return;
     }
     box.innerHTML = `
-      <div class="card quick-card">
+      <div class="card quick-card striped" style="--hue:var(--orange)">
         <p class="quick-phrase" lang="${esc(COURSE_LANGUAGE)}">${esc(phrase.text)}</p>
         <p class="quick-english">${esc(phrase.translation)}</p>
         <button class="btn btn-primary quick-listen" data-quick-say>Listen</button>
@@ -3054,11 +3053,11 @@ function renderQuick() {
     }
     box.innerHTML = `
       <div class="section-label">Asked for before</div>
-      <div class="rows">
+      <div class="rows rows-spaced">
         ${recent
           .map(
             (phrase) => `
-              <div class="row">
+              <div class="row striped" style="--hue:var(--orange)">
                 <button class="row-open" data-quick-open="${esc(phrase.id)}">
                   <span class="row-main">
                     <span class="row-title">${esc(phrase.text)}</span>
@@ -3139,9 +3138,11 @@ function renderPhrases() {
   const captures = library.captures();
 
   view.innerHTML = `
-    <div class="page-back">${homeLink()}</div>
-    <h1>Phrases</h1>
-    <p class="muted list-intro">${all.length} card${all.length === 1 ? "" : "s"} — the whole course plus your own,
+    <header class="home-head section-head">
+      <div class="wordmark">Phrases</div>
+      ${homeLink()}
+    </header>
+    <p class="muted section-intro">${all.length} card${all.length === 1 ? "" : "s"} — the whole course plus your own,
       all of it open.</p>
     <button class="btn section-add" data-open-add>Add a card</button>
     <label class="field"><input type="search" id="search" placeholder="Search"></label>
@@ -3170,14 +3171,12 @@ function renderPhrases() {
     // cards, then the course in its own order.
     const starred = library.favouritePhrases().filter(match);
     if (starred.length) {
-      sections.push(`<div class="section-label">Favourites</div>
-        <div class="rows">${starred.map((p) => rowFor(p)).join("")}</div>`);
+      sections.push(group("Favourites", starred, "var(--gold)", "var(--gold-dark)", "#4b4b4b"));
     }
 
     const pending = captures.filter(match);
     if (pending.length) {
-      sections.push(`<div class="section-label">Jotted down — needs the Spanish</div>
-        <div class="rows">${pending.map((p) => rowFor(p)).join("")}</div>`);
+      sections.push(group("Jotted down — needs the Spanish", pending, "var(--orange)", "var(--orange-dark)"));
     }
 
     const own = library
@@ -3185,8 +3184,7 @@ function renderPhrases() {
       .filter((p) => p.text.trim() && p.deck !== ABOUT_DECK)
       .filter(match);
     if (own.length) {
-      sections.push(`<div class="section-label">Mum's own phrases</div>
-        <div class="rows">${own.map((p) => rowFor(p)).join("")}</div>`);
+      sections.push(group("Mum's own phrases", own, "var(--blue)", "var(--blue-dark)"));
     }
 
     const about = library
@@ -3194,8 +3192,7 @@ function renderPhrases() {
       .filter((p) => p.text.trim() && p.deck === ABOUT_DECK)
       .filter(match);
     if (about.length) {
-      sections.push(`<div class="section-label">${esc(ABOUT_DECK)}</div>
-        <div class="rows">${about.map((p) => rowFor(p)).join("")}</div>`);
+      sections.push(group(esc(ABOUT_DECK), about, "var(--green)", "var(--green-dark)"));
     }
 
     for (const unit of COURSE) {
@@ -3204,8 +3201,7 @@ function renderPhrases() {
           .map((p) => library.decorate({ ...p, language: COURSE_LANGUAGE }))
           .filter(match);
         if (!inLesson.length) continue;
-        sections.push(`<div class="section-label">${esc(unit.title)} · ${esc(lesson.title)}</div>
-          <div class="rows">${inLesson.map((p) => rowFor(p)).join("")}</div>`);
+        sections.push(group(`${esc(unit.title)} · ${esc(lesson.title)}`, inLesson, unit.color, unit.colorDark));
       }
     }
 
@@ -3234,11 +3230,27 @@ function renderPhrases() {
     );
   }
 
-  function rowFor(phrase) {
+  /* Each group wears a colour, the way every deck in Xerra does: a one-row
+     banner in the group's colour, then rows striped with it. A course lesson
+     takes its unit's colour off the path, so a lesson looks the same here as
+     its banner does there; Favourites are gold and Sobre mí green, as their
+     tiles are; own phrases are blue, and a jotted-down capture takes the
+     orange of the Add page it is still waiting to be finished on. Gold takes
+     dark lettering, as the tile does. */
+  function group(title, phrases, hue, hueDark, on = "#ffffff") {
+    return `
+      <div class="list-banner" style="--hue:${hue};--hue-dark:${hueDark};--hue-on:${on}">
+        <span class="list-banner-name">${title}</span>
+        <span class="list-banner-count">${phrases.length}</span>
+      </div>
+      <div class="rows rows-spaced">${phrases.map((p) => rowFor(p, hue)).join("")}</div>`;
+  }
+
+  function rowFor(phrase, hue) {
     const capture = !phrase.text.trim();
     const best = library.bestScore(phrase.id);
     return `
-      <div class="row">
+      <div class="row striped" style="--hue:${hue}">
         ${starButton(phrase)}
         <button class="row-open"
                 ${capture ? `data-edit="${esc(phrase.id)}"` : `data-phrase="${esc(phrase.id)}"`}>
@@ -3810,8 +3822,10 @@ function renderAdd() {
      completeCard still needs Spanish or English, so this box on its own can't
      build a card. */
   view.innerHTML = `
-    <div class="page-back">${homeLink()}</div>
-    <h1>Add a card</h1>
+    <header class="home-head section-head">
+      <div class="wordmark">Add a card</div>
+      ${homeLink()}
+    </header>
     <p class="muted add-intro">Start with the situation — it's what the rest of the card is built from.
       Then write whatever you remember, in Spanish or English, and Perico's clever cousin
       will fix it up.</p>
@@ -4252,8 +4266,10 @@ function renderSettings() {
   const doneCount = LESSONS.filter((l) => progress.isDone(l.id)).length;
 
   view.innerHTML = `
-    <div class="page-back">${homeLink()}</div>
-    <h1>Settings</h1>
+    <header class="home-head section-head">
+      <div class="wordmark">Settings</div>
+      ${homeLink()}
+    </header>
 
     <div class="section-label">Card builder</div>
     <div class="card">
