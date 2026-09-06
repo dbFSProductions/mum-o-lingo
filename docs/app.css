@@ -361,6 +361,38 @@ p { margin: 0 0 10px; }
 .row-sub { font-size: 0.8rem; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chev { color: var(--text-3); flex: none; }
 
+/* ------------------------------------------------------------- list colour */
+
+/* Ported from Xerra: every list wears a colour. A `.list-banner` is the
+   path's unit banner one row tall — fill, white lettering, the slab, no
+   press because it is a heading — over rows spaced out as cards and striped
+   with the same colour down the left edge, with a wash of it behind. `--hue`
+   and `--hue-dark` are set inline by whoever draws the group, since a course
+   unit's colour is a hex in content.js rather than a palette variable; gold
+   sets `--hue-on` to dark lettering, as the gold tile does. */
+.rows-spaced { background: none; border: 0; border-radius: 0; overflow: visible; display: grid; gap: 10px; }
+.rows-spaced .row { background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); }
+.row.striped, .card.striped {
+  border-left: 6px solid var(--hue);
+  background: color-mix(in srgb, var(--hue) 7%, var(--surface));
+}
+.row.striped:active { background: color-mix(in srgb, var(--hue) 14%, var(--surface)); }
+.list-banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--hue);
+  color: var(--hue-on, #ffffff);
+  box-shadow: 0 4px 0 var(--hue-dark);
+}
+.list-banner:first-child { margin-top: 0; }
+.list-banner-name { font-weight: 900; font-size: 1.02rem; overflow-wrap: anywhere; }
+.list-banner-count { flex: none; font-size: 0.82rem; font-weight: 800; opacity: 0.9; }
+
 .section-label {
   font-size: 0.76rem;
   text-transform: uppercase;
@@ -474,8 +506,6 @@ button { font: inherit; }
    beside it. */
 .section-head .wordmark { font-size: 1.35rem; }
 .section-intro { margin: -4px 0 14px; }
-.page-back { margin: 0 0 10px; }
-.page-back .link { padding-left: 0; }
 
 /* "Add a card", under the list it adds to. */
 /* What the app made of the article, under the select. Feedback, not a fourth
@@ -987,8 +1017,6 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 
 /* ------------------------------------------------------- phrases, add, chat */
 
-.list-intro { margin: -8px 0 14px; font-weight: 700; }
-
 .sheet-lede { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
 .sheet-lede p { flex: 1; margin: 0; font-weight: 700; }
 
@@ -1205,8 +1233,6 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 .chat-foot { margin-top: 10px; text-align: center; }
 .chat-foot .link { font-size: 0.78rem; }
 
-.about-head { margin: 0 0 6px; }
-.about-lede { margin: 0 0 16px; }
 #about-practise { margin-bottom: 4px; }
 #about-make { width: 100%; margin-top: 12px; }
 #about-make + .tiny { margin-top: 8px; text-align: center; }

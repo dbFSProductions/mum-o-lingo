@@ -148,6 +148,39 @@ greeting and six tiles, and nothing else — the path lives behind **Practice**.
 - **Mézclalo moved with the path.** It is the end of the course, so it belongs
   behind Practice rather than on a home screen that no longer shows lessons.
 
+### Every list wears a colour, and Home is in the same place everywhere
+
+Ported from Xerra the day it landed there, asked for as *"mum-o and Deb-o now
+look dull without all the colours"*. Words and The Past were never dull — they
+are the path's own units, banners and all — so what changed is the pages that
+listed white rows under grey labels.
+
+- **Phrases groups its rows under a one-row banner in the group's colour**
+  (`group()` in `renderPhrases`, `.list-banner` in app.css), with the rows
+  under it striped in the same colour (`.row.striped`) and spaced out as
+  cards (`.rows-spaced`) rather than fused into one list. A course lesson
+  takes its unit's `color` off the path, so a lesson looks the same here as
+  its banner does there; Favourites are gold and Sobre mí green, as their
+  tiles are; own phrases are blue; a jotted-down capture is orange, the
+  colour of the Add page it is waiting to be finished on. Gold takes dark
+  lettering, as the tile does. The colours are set inline (`--hue`,
+  `--hue-dark`, `--hue-on`) because a unit's colour is a hex in `content.js`
+  rather than a palette variable.
+- **Quick's answer card and its *Asked for before* rows are striped in
+  Quick's orange, and Sobre mí's cards in its green.** Same stripe, same
+  spaced rows.
+- **Every page below Home opens with the same `home-head section-head` —
+  the title where the wordmark goes and *‹ Home* beside it.** Phrases,
+  Settings and Add had the link on a line above an `h1`, and Sobre mí had a
+  ✕ in a lesson bar: four pages, three shapes of the same control. Reported
+  as the Home button being different in Sobre mí. `.page-back`,
+  `.list-intro`, `.about-head` and `.about-lede` went with it; Sobre mí
+  keeps its `#about-back` id and handler.
+
+Xerra's version of this also paints its deck rows as filled banners and its
+print sheet; neither has a counterpart here, since this app has no deck list
+and no print page.
+
 ### El pasado and Palabras came off the path
 
 `TILE_UNITS` is the whole of it: those two units are reached through a tile
