@@ -331,6 +331,20 @@ override will do.
   off the end whatever comes back. Only the *end* — an interior comma would mean
   it really was a phrase.
 
+#### An adverb has no article, and the brief said every word did
+
+*Ahora* filed through Add a word came back as **el ahora**. The situation
+sent to `/complete-card` said the word was to be *"given with its article"*,
+flat, because that line was written to stop *"dog"* coming back as a
+sentence — and on a noun it is right. On anything else the model did what it
+was told and invented one. That is not cosmetic twice over: the card then
+drills a word nobody says, and `genderOf` reads the invented article and
+paints an adverb blue.
+
+`SINGLE_WORD_SITUATION` in app.js is the whole of the fix: a noun comes with
+its definite article, anything else — adverb, verb, adjective, question
+word — comes bare and is never given one. Same line in all three apps.
+
 ### Add a word, and where your own words live
 
 The Words section was read-only: Palabras is course content in `content.js`, so
