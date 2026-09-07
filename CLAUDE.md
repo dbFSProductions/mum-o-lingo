@@ -813,10 +813,20 @@ and they are the answer to "AI-generated content from life context".
   sheet's job. The button appears the moment there is a transcript rather than
   on the next full render — Xerra still has that gap, and it is worth porting
   back.
+- **The interview sits above the cards, the way Quick's ask box sits above
+  what it made.** Asked for as *"put the about me chat above the about me
+  cards … a similar layout to quick"*, and ported from Xerra the same day.
+  The page opened on the practise button and every card, with the box you
+  talk to underneath — so once there were thirty cards the thing the page
+  is *for* was a screen and a half down. Now it reads: the chat card and
+  Create, then *Your cards* with its Practise button and the rows. Nothing
+  else moved — same ids, same handlers, same `paintLog` — so the assertions
+  below hold as they were, plus one on the order: `#about-form` above
+  `#about-make` above `#about-practise` above the first `.row`.
 
-Xerra has all of this except the last point, in the same shape. Keep them in
-step; the divergences that are deliberate are the deck-vs-unit shape (it has a
-deck list, this has a path) and the Spanish name.
+Xerra has all of this except the reset-button point, in the same shape. Keep
+them in step; the divergences that are deliberate are the deck-vs-unit shape
+(it has a deck list, this has a path) and the Spanish name.
 
 ---
 
