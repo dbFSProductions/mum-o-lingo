@@ -6,13 +6,25 @@
 
 // Bumped with VERSION in js/version.js — Settings shows the two side by side,
 // so forgetting one of them shows up as two different numbers on screen.
-const VERSION = "mumolingo-v28";
+const VERSION = "mumolingo-v29";
 const SHELL = [
   "./",
   "./index.html",
   "./app.css",
   "./manifest.webmanifest",
   "./js/app.js",
+  "./js/about.js",
+  "./js/add.js",
+  "./js/ask.js",
+  "./js/core.js",
+  "./js/drill.js",
+  "./js/path.js",
+  "./js/phrases.js",
+  "./js/pictures.js",
+  "./js/quick.js",
+  "./js/replies.js",
+  "./js/score.js",
+  "./js/settings.js",
   "./js/version.js",
   "./js/store.js",
   "./js/audio.js",
